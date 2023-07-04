@@ -4,26 +4,26 @@ import { searchPlugin } from '@vuepress/plugin-search'
 export default defineUserConfig({
   base: '/blog/',
   lang: 'zh-CN',
-  title: 'haozg`s blog',
-  description: 'haozg`s blog',
-  head: [['link', { rel: 'icon', href: '/images/logo.png' }]],
+  title: 'haozg',
+  description: 'haozg',
+  head: [['link', { rel: 'icon', href: '/blog/images/logo.png' }]],
   port: 8888,
   theme: defaultTheme({
     logo: '/images/logo.png',
     navbar: [
       // NavbarItem
-      {
-        text: '导航',
-        link: '/nav/',
-      },
+      // {
+      //   text: '导航',
+      //   link: '/nav/',
+      // },
       // NavbarGroup
       {
         text: '三大件',
         children: [
           {
-            text: 'js',
-            link: '/js/',
-            activeMatch: '^/js/'
+            text: 'html',
+            link: '/html/',
+            activeMatch: '^/html/'
           },
           {
             text: 'css',
@@ -31,9 +31,9 @@ export default defineUserConfig({
             activeMatch: '^/css/'
           },
           {
-            text: 'html',
-            link: '/html/',
-            activeMatch: '^/html/'
+            text: 'js',
+            link: '/js/',
+            activeMatch: '^/js/'
           }
         ],
       },

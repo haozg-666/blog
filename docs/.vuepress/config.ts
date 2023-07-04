@@ -13,12 +13,12 @@ export default defineUserConfig({
     navbar: [
       // NavbarItem
       {
-        text: '首页',
-        link: '/guide/',
+        text: '导航',
+        link: '/nav/',
       },
       // NavbarGroup
       {
-        text: '前端',
+        text: '三大件',
         children: [
           {
             text: 'js',
@@ -37,8 +37,40 @@ export default defineUserConfig({
           }
         ],
       },
+      {
+        text: 'Vue',
+        children: [
+          {
+            text: 'vue2',
+            link: '/vue2/',
+            activeMatch: '^/vue2/'
+          },
+          {
+            text: 'vue3',
+            link: '/vue3/',
+            activeMatch: '^/vue3/'
+          }
+        ],
+      },
+      {
+        text: "其他",
+        children: [
+          {
+            text: "掘金",
+            link: "https://juejin.cn/user/1204720474797272"
+          },
+          {
+            text: "力扣",
+            link: "https://leetcode.cn/u/haozg6"
+          },
+          {
+            text: "Github",
+            link: "https://github.com/haozg-666"
+          }
+        ]
+      },
       // 字符串 - 页面文件路径
-      '/bar/README.md',
+      // '/bar/README.md',
     ],
     sidebar: {
       '/guide/': [
@@ -65,8 +97,6 @@ export default defineUserConfig({
         }
       ]
     }
-    // github
-    // repo: 'vuejs/vuepress',
   }),
   plugins: [
     searchPlugin({

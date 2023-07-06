@@ -1,5 +1,7 @@
 import { defineUserConfig, defaultTheme } from 'vuepress';
-import { searchPlugin } from '@vuepress/plugin-search'
+import { searchPlugin } from '@vuepress/plugin-search';
+import { copyCodePlugin } from "vuepress-plugin-copy-code2";
+
 
 export default defineUserConfig({
   base: '/blog/',
@@ -112,5 +114,6 @@ export default defineUserConfig({
       }],
       maxSuggestions: 10
     }),
+    copyCodePlugin({})
   ],
 })

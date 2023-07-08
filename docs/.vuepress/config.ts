@@ -1,6 +1,7 @@
 import { defineUserConfig, defaultTheme } from 'vuepress';
 import { searchPlugin } from '@vuepress/plugin-search';
 import { copyCodePlugin } from "vuepress-plugin-copy-code2";
+import { readingTimePlugin } from "vuepress-plugin-reading-time2";
 
 
 export default defineUserConfig({
@@ -114,6 +115,7 @@ export default defineUserConfig({
       }],
       maxSuggestions: 10
     }),
-    copyCodePlugin({})
+    copyCodePlugin({}),
+    readingTimePlugin({})
   ],
 })

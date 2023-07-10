@@ -3,6 +3,7 @@ import { searchPlugin } from '@vuepress/plugin-search';
 import { copyCodePlugin } from "vuepress-plugin-copy-code2";
 import { readingTimePlugin } from "vuepress-plugin-reading-time2";
 import { commentPlugin } from "vuepress-plugin-comment2";
+import { componentsPlugin } from "vuepress-plugin-components";
 
 export default defineUserConfig({
   base: '/blog/',
@@ -99,6 +100,9 @@ export default defineUserConfig({
           ],
         }
       ]
+    },
+    themePlugins: {
+      backToTop: false
     }
   }),
   plugins: [
@@ -123,6 +127,12 @@ export default defineUserConfig({
       repoId: 'R_kgDOJ5rUTg',
       category: 'Announcements',
       categoryId: 'DIC_kwDOJ5rUTs4CXyF8'
+    }),
+    componentsPlugin({
+      rootComponents: {
+        backToTop: true,
+        notice: []
+      }
     }),
   ],
 })

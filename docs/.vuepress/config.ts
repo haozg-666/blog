@@ -6,6 +6,7 @@ import { commentPlugin } from "vuepress-plugin-comment2";
 import { componentsPlugin } from "vuepress-plugin-components";
 import { copyrightPlugin } from "vuepress-plugin-copyright2";
 import vuepressPluginAnchorRight from 'vuepress-plugin-anchor-right';
+import { removeHtmlExtensionPlugin } from 'vuepress-plugin-remove-html-extension'
 
 export default defineUserConfig({
   base: '/blog/',
@@ -145,6 +146,7 @@ export default defineUserConfig({
         }
       }
     }),
-    [vuepressPluginAnchorRight()]
+    [vuepressPluginAnchorRight()],
+    [removeHtmlExtensionPlugin()],
   ],
 })

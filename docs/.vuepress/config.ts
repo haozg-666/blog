@@ -4,6 +4,7 @@ import { copyCodePlugin } from "vuepress-plugin-copy-code2";
 import { readingTimePlugin } from "vuepress-plugin-reading-time2";
 import { commentPlugin } from "vuepress-plugin-comment2";
 import { componentsPlugin } from "vuepress-plugin-components";
+import { copyrightPlugin } from "vuepress-plugin-copyright2";
 
 export default defineUserConfig({
   base: '/blog/',
@@ -132,6 +133,15 @@ export default defineUserConfig({
       rootComponents: {
         backToTop: true,
         notice: []
+      }
+    }),
+    copyrightPlugin({
+      global: true,
+      author: '【haozg】',
+      locales: {
+        '/': {
+          link: '原文发表于: :link \n商业转载请联系作者获得授权，非商业转载请注明出处。'
+        }
       }
     }),
   ],

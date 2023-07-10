@@ -2,7 +2,7 @@ import { defineUserConfig, defaultTheme } from 'vuepress';
 import { searchPlugin } from '@vuepress/plugin-search';
 import { copyCodePlugin } from "vuepress-plugin-copy-code2";
 import { readingTimePlugin } from "vuepress-plugin-reading-time2";
-
+import { commentPlugin } from "vuepress-plugin-comment2";
 
 export default defineUserConfig({
   base: '/blog/',
@@ -116,6 +116,13 @@ export default defineUserConfig({
       maxSuggestions: 10
     }),
     copyCodePlugin({}),
-    readingTimePlugin({})
+    readingTimePlugin({}),
+    commentPlugin({
+      provider: 'Giscus',
+      repo: 'haozg-666/giscus-comment',
+      repoId: 'R_kgDOJ5rUTg',
+      category: 'Announcements',
+      categoryId: 'DIC_kwDOJ5rUTs4CXyF8'
+    }),
   ],
 })

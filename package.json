@@ -12,8 +12,11 @@
   "license": "ISC",
   "devDependencies": {
     "@vuepress/client": "2.0.0-beta.64",
+    "@vuepress/plugin-active-header-links": "2.0.0-beta.64",
+    "@vuepress/plugin-register-components": "2.0.0-beta.64",
     "@vuepress/plugin-search": "2.0.0-beta.64",
     "@vuepress/theme-default": "2.0.0-beta.64",
+    "@vuepress/utils": "2.0.0-beta.64",
     "vue": "^3.3.4",
     "vuepress": "2.0.0-beta.64",
     "vuepress-plugin-anchor-right": "0.0.1-beta.18",
@@ -22,6 +25,7 @@
     "vuepress-plugin-copy-code2": "2.0.0-beta.230",
     "vuepress-plugin-copyright2": "2.0.0-beta.231",
     "vuepress-plugin-reading-time2": "2.0.0-beta.230",
-    "vuepress-plugin-remove-html-extension": "^1.3.0"
+    "vuepress-plugin-remove-html-extension": "^1.3.0",
+    "vuepress-plugin-use-pages": "^1.0.5"
   }
 }

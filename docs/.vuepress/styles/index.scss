@@ -40,3 +40,7 @@ html.dark {
 ::-webkit-scrollbar-thumb:active {
   background-color: var(--scrollbar-bg-active);
 }
+
+.page-no-slide .page {
+  padding-right: 0;
+}

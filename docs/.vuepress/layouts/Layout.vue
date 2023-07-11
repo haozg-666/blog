@@ -27,6 +27,12 @@ onMounted(() => {
 
 <template>
   <ParentLayout>
+    <template #page-top>
+      page-top
+    </template>
+    <template #page-content-top>
+      page-content-top
+    </template>
     <template #page-bottom>
       <CommentService :darkmode="isDarkMode" />
     </template>

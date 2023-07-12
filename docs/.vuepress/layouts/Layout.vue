@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, onMounted, ref } from "vue";
 import ParentLayout from '@vuepress/theme-default/layouts/Layout.vue'
+import PageToc from "../components/pageToc.vue";
 
 const isDarkMode = ref(false);
 
@@ -32,9 +33,10 @@ onMounted(() => {
     </template>
     <template #page-content-top>
       page-content-top
+      <page-toc />
     </template>
     <template #page-bottom>
-      <CommentService :darkmode="isDarkMode" />
+      <comment-service :darkmode="isDarkMode" />
     </template>
   </ParentLayout>
 </template>

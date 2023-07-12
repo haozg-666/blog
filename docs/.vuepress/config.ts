@@ -6,7 +6,6 @@ import { readingTimePlugin } from "vuepress-plugin-reading-time2";
 import { commentPlugin } from "vuepress-plugin-comment2";
 import { componentsPlugin } from "vuepress-plugin-components";
 import { copyrightPlugin } from "vuepress-plugin-copyright2";
-import vuepressPluginAnchorRight from 'vuepress-plugin-anchor-right';
 import { removeHtmlExtensionPlugin } from 'vuepress-plugin-remove-html-extension';
 import { registerComponentsPlugin } from '@vuepress/plugin-register-components';
 import { usePagesPlugin } from 'vuepress-plugin-use-pages';
@@ -156,7 +155,6 @@ export default defineUserConfig({
         }
       }
     }),
-    [vuepressPluginAnchorRight()],
     [removeHtmlExtensionPlugin()],
     registerComponentsPlugin({
       componentsDir: path.resolve(__dirname, './components'),
@@ -166,8 +164,7 @@ export default defineUserConfig({
     usePagesPlugin({ startsWith: '/html/', file: 'page-html.js' }),
     usePagesPlugin({ startsWith: '/js/', file: 'page-js.js' }),
     activeHeaderLinksPlugin({
-      headerLinkSelector: '.anchor-right',
-      headerAnchorSelector: 'li.level',
-    }),
+      headerLinkSelector: '.anchor-list-level-a'
+    })
   ],
 })

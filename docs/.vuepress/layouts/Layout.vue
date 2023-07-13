@@ -5,6 +5,11 @@ import PageToc from "../components/pageToc.vue";
 
 const isDarkMode = ref(false);
 
+const hasGToc = ref(false);
+function tocLength(len) {
+  hasGToc.value = !!len;
+}
+
 onMounted(() => {
   const html = document.documentElement;
 
@@ -27,13 +32,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <ParentLayout>
-    <template #page-top>
-      page-top
-    </template>
+  <ParentLayout :class="{hasGToc}">
     <template #page-content-top>
-      page-content-top
-      <page-toc />
+      <page-toc @toc-length="tocLength" />
     </template>
     <template #page-bottom>
       <comment-service :darkmode="isDarkMode" />

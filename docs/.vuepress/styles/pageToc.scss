@@ -1,0 +1,47 @@
+.hasGToc .page {
+  padding-right: var(--nav-width);
+}
+
+.g-toc-wrap {
+  float: right;
+  position: sticky;
+  top: 100px;
+  right: 0;
+  transform: translateX(calc(100% + 30px));
+  max-width: var(--nav-width);
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 75vh;
+  padding-inline-start: 8px;
+  scroll-behavior: smooth;
+
+  ul,li {
+    list-style: none;
+    line-height: 1.2;
+  }
+
+  ul {
+    padding-left: 0;
+  }
+}
+
+.g-toc-level {
+
+  >a.g-toc-link {
+    display: inline-block;
+    padding: 3px 8px;
+    border-left: 1px solid var(--light-grey);
+    font-size: 13px;
+    color: var(--light-grey);
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  &.active {
+    >a.g-toc-link {
+      border-color: var(--c-text-accent);
+      color: var(--c-text-accent);
+    }
+  }
+}

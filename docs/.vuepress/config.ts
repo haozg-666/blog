@@ -117,6 +117,11 @@ export default defineUserConfig({
       backToTop: false
     }
   }),
+  markdown: {
+    headers: {
+      level: [2, 3, 4, 5, 6]
+    }
+  },
   plugins: [
     searchPlugin({
       // 配置项
@@ -164,7 +169,7 @@ export default defineUserConfig({
     usePagesPlugin({ startsWith: '/html/', file: 'page-html.js' }),
     usePagesPlugin({ startsWith: '/js/', file: 'page-js.js' }),
     activeHeaderLinksPlugin({
-      headerLinkSelector: '.anchor-list-level-a'
-    })
+      headerLinkSelector: '.g-toc-link'
+    }),
   ],
 })

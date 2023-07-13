@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, defineEmits, onMounted } from "vue";
 import {useRoute} from 'vue-router';
 import { usePageData } from '@vuepress/client';
+
+const emit = defineEmits(['tocLength'])
 
 const route = useRoute();
 const headers = ref([]);
@@ -9,22 +11,23 @@ const headers = ref([]);
 onMounted(() => {
   const page = usePageData();
   headers.value = page.value.headers;
+  emit('tocLength', headers.value.length);
 });
 </script>
 
 <template>
-  <aside class="page-anchor">
-    <ul class="anchor-list">
+  <nav class="g-toc-wrap">
+    <ul class="g-toc">
       <template v-for="(item, index) in headers" :key="index">
         <template v-if="item.children.length > 0">
           <page-toc-sub-menu :key="item.key" :menu-info="item" :hash="route.hash" />
         </template>
         <template v-else>
-          <li :class="['anchor-list-level', 'anchor-list-level-'+item.level, { active: route.hash === `#${item.slug}` }]">
-            <a class="anchor-list-level-a" :href="`#${item.slug}`">{{ item.title }}</a>
+          <li :class="['g-toc-level', 'g-toc-level-'+item.level, { active: route.hash === `#${item.slug}` }]">
+            <a class="g-toc-link" :href="`#${item.slug}`">{{ item.title }}</a>
           </li>
         </template>
       </template>
     </ul>
-  </aside>
+  </nav>
 </template>

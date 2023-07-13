@@ -1,7 +1,10 @@
+@import "./pageToc";
+
 html {
   --scrollbar-bg: #e6e6e6;
   --scrollbar-bg-hover: #349469;
   --scrollbar-bg-active: #318a62;
+  --nav-width: 240px;
 }
 
 html.dark {
@@ -9,28 +12,28 @@ html.dark {
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 /* 定义滚动条轨道 */
 ::-webkit-scrollbar-track-piece {
   background-color: transparent;
-  -webkit-border-radius: 8px;
+  -webkit-border-radius: 6px;
 }
 
 /* 定义滑块 垂直 */
 ::-webkit-scrollbar-thumb:vertical {
-  height: 4px;
+  height: 6px;
   background-color: var(--scrollbar-bg);
-  -webkit-border-radius: 8px;
+  -webkit-border-radius: 6px;
 }
 
 /* 定义滑块 水平 */
 ::-webkit-scrollbar-thumb:horizontal {
   width: 8px;
   background-color: var(--scrollbar-bg);
-  -webkit-border-radius: 8px;
+  -webkit-border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

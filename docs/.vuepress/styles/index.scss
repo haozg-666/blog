@@ -1,14 +1,22 @@
 @import "./pageToc";
+@import "./timeline";
 
 html {
   --scrollbar-bg: #e6e6e6;
   --scrollbar-bg-hover: #349469;
   --scrollbar-bg-active: #318a62;
   --nav-width: 240px;
+  --dot-color: #fff;
+  --dot-bar-color: #eaecef;
+  --dot-border-color: #ddd;
+  --color-transition: .3s ease;
 }
 
 html.dark {
   --scrollbar-bg: #3c3c3c;
+  --dot-color: #444;
+  --dot-bar-color: #333;
+  --dot-border-color: #555;
 }
 
 ::-webkit-scrollbar {
@@ -46,4 +54,8 @@ html.dark {
 
 .page-no-slide .page {
   padding-right: 0;
+}
+
+.page-no-meta .page-meta {
+  display: none;
 }

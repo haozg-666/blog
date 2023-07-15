@@ -1,13 +1,13 @@
 .g-timeline-wrap {
   position: relative;
-  padding-left: 100px;
+  padding-left: 200px;
   &::before {
     content: " ";
     position: absolute;
-    top: 14px;
-    left: 84px;
+    top: 34px;
+    left: 184px;
     width: 4px;
-    height: calc(100% - 38px);
+    height: calc(100% - 58px);
     -webkit-margin-end: -2px;
     margin-inline-end: -2px;
     background: var(--dot-bar-color);
@@ -25,13 +25,17 @@
 
 .g-timeline-item {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-top: 20px;
+  line-height: 40px;
 
   &::before {
     content: " ";
     position: absolute;
     top: 50%;
     z-index: 2;
-    margin-top: -6px;
+    margin-top: 5px;
     -webkit-margin-start: -6px;
     margin-inline-start: -6px;
     border: 2px solid var(--dot-border-color);
@@ -42,10 +46,25 @@
     width: 8px;
     height: 8px;
   }
+
+  &.title::before {
+    top: 30px;
+  }
+
+  &:hover {
+    >.g-timeline-date {
+      font-size: 16px;
+    }
+    >.g-timeline-link {
+      font-size: 18px;
+      color: var(--c-text-accent);
+    }
+  }
 }
 
 .g-timeline-title {
-
+  font-size: 24px;
+  color: var(--c-text);
 }
 
 .g-timeline-date {
@@ -53,9 +72,23 @@
   left: 0;
   transform: translateX(-100px);
   width: 70px;
+  color: var(--c-text);
+  font-size: 14px;
   text-align: right;
+  transition: font-size var(--transform-transition);
 }
 
-.g-timeline-link {
+.g-timeline-link.g-timeline-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+  font-size: 16px;
+  transition: color var(--color-transition),font-size var(--transform-transition);
 
+  &:hover {
+    text-decoration: none;
+  }
 }

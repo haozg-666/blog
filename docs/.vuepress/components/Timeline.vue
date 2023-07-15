@@ -34,7 +34,7 @@ times.forEach(i => {
 <template>
   <div class="g-timeline-wrap">
     <ul class="g-timeline">
-      <li class="g-timeline-item"
+      <li class="g-timeline-item title"
           v-for="item of all"
           :key="item.year">
         <span class="g-timeline-title" v-text="item.year"></span>

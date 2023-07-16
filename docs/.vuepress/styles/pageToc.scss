@@ -9,9 +9,7 @@
   right: 0;
   transform: translateX(calc(100% + 30px));
   max-width: var(--nav-width);
-  overflow-x: hidden;
-  overflow-y: auto;
-  max-height: 75vh;
+  height: 0;
   padding-inline-start: 8px;
   scroll-behavior: smooth;
 
@@ -23,6 +21,14 @@
   ul {
     padding-left: 0;
   }
+}
+
+.g-toc {
+  margin-top: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-width: var(--nav-width);
+  max-height: 70vh;
 }
 
 .g-toc-level {

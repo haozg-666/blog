@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { ref, defineEmits, onMounted } from "vue";
+import { defineEmits, computed } from "vue";
 import {useRoute} from 'vue-router';
 import { usePageData } from '@vuepress/client';
 
 const emit = defineEmits(['tocLength'])
 
 const route = useRoute();
-const headers = ref([]);
-
-onMounted(() => {
-  const page = usePageData();
-  headers.value = page.value.headers;
-  emit('tocLength', headers.value.length);
+const page = usePageData();
+const headers = computed(() => {
+  emit('tocLength', page.value.headers);
+  return page.value.headers;
 });
 </script>
 

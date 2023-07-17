@@ -6,6 +6,7 @@ import { usePageData } from '@vuepress/client';
 const emit = defineEmits(['tocLength'])
 
 const route = useRoute();
+console.log(111, route)
 const page = usePageData();
 const headers = computed(() => {
   emit('tocLength', page.value.headers);

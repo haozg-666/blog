@@ -1,5 +1,8 @@
 .hasGToc .page {
   padding-right: var(--nav-width);
+  @media all and (max-width: 1000px) {
+    padding-right: 0;
+  }
 }
 
 .g-toc-wrap {
@@ -12,6 +15,10 @@
   height: 0;
   padding-inline-start: 8px;
   scroll-behavior: smooth;
+
+  @media all and (max-width: 1000px) {
+    display: none;
+  }
 
   ul,li {
     list-style: none;

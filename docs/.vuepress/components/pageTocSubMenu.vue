@@ -24,8 +24,7 @@ const props = defineProps({
         <page-toc-sub-menu
             :key="item.key"
             :menu-info="item"
-            :route="route"
-            :router="router"
+            :hash="hash"
             v-if="item.children.length > 0"/>
         <li v-else
             :class="['g-toc-level', 'g-toc-level-'+item.level,  { active: hash === `#${item.slug}` }]">

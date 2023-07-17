@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { defineEmits, computed } from "vue";
+import { defineEmits, computed, toRaw, getCurrentInstance } from "vue";
 import {useRoute} from 'vue-router';
 import { usePageData } from '@vuepress/client';
 
 const emit = defineEmits(['tocLength'])
 
 const route = useRoute();
-console.log(111, route)
+console.log(111, toRaw(route))
+console.log(222, getCurrentInstance().proxy.$route)
 const page = usePageData();
 const headers = computed(() => {
   emit('tocLength', page.value.headers);

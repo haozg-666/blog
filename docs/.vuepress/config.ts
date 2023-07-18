@@ -101,18 +101,16 @@ export default defineUserConfig({
           collapsible: true,
           children: [
             '/js/README.md',
-            {
-              text: '防抖与节流指令',
-              link: '/js/debounceAndThrottle.md'
-            },
-            {
-              text: 'axios拦截器-防止重复提交',
-              link: '/js/interceptorsAxios.md'
-            }
+            '/js/debounceAndThrottle.md',
+            '/js/interceptorsAxios.md'
           ],
         }
       ]
     },
+    sidebarDepth: 0,
+    editLink: false,
+    lastUpdatedText: '上次编辑于',
+    contributorsText: '贡献者',
     themePlugins: {
       backToTop: false
     }

@@ -20,6 +20,9 @@ export default defineUserConfig({
   description: 'haozg',
   head: [['link', { rel: 'icon', href: '/blog/images/logo.png' }]],
   port: 8888,
+  alias: {
+    '@theme/Home.vue': path.resolve(__dirname, './components/Home.vue'),
+  },
   theme: defaultTheme({
     logo: '/images/logo.png',
     navbar: [

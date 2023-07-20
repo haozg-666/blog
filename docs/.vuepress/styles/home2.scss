@@ -1,0 +1,14 @@
+.u-text-c {
+  text-align: center;
+}
+
+.home2 {
+  padding: var(--navbar-height) 2rem 0;
+  max-width: var(--homepage-width);
+  margin: 0 auto;
+
+  .github-image {
+    margin: 0 auto;
+    background-color: #fff;
+  }
+}

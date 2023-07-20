@@ -16,7 +16,7 @@ const __dirname = getDirname(import.meta.url)
 export default defineUserConfig({
   base: '/blog/',
   lang: 'zh-CN',
-  title: 'haozg',
+  title: 'Mr.Haozg',
   description: 'haozg',
   head: [['link', { rel: 'icon', href: '/blog/images/logo.png' }]],
   port: 8888,

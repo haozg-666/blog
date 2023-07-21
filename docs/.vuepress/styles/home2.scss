@@ -3,12 +3,48 @@
 }
 
 .home2 {
-  padding: var(--navbar-height) 2rem 0;
+  padding: var(--navbar-height) 0 0;
   max-width: var(--homepage-width);
   margin: 0 auto;
 
+  .first {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    height: calc(100vh - var(--navbar-height));
+    background-image: url("https://file.mo7.cc/api/public/bz");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    .img {
+      display: block;
+      max-width: 100%;
+      max-height: 15rem;
+      margin: 1.5rem auto;
+      border-radius: 100%;
+    }
+  }
+
+  .radial {
+    margin: auto;
+    font-size: 48px;
+    color: #fff;
+    mask: radial-gradient(circle at 0 50%, #000, transparent 10%, transparent 0);
+    mask-size: 100%;
+    text-align: center;
+    animation: scale 2s infinite;
+
+    @keyframes scale {
+      100% {
+        mask-size: 2000%;
+      }
+    }
+  }
+
   .github-image {
-    margin: 0 auto;
+    display: block;
+    margin: 1.5rem auto;
     background-color: #fff;
   }
 }

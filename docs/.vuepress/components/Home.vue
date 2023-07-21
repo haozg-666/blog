@@ -19,10 +19,11 @@ const heroImage = computed(() => {
   <main class="home2">
     <div class="first">
       <div class="first-inner">
-        <img class="img" :src="heroImage" alt="">
+        <img class="img" :src="withBase(heroImage)" alt="">
         <div class="radial">种一棵树最好的时间是十年前<br>其次就是现在</div>
         <img class="github-image" src="https://ghchart.rshah.org/haozg-666" alt="我的 GitHub 贡献图" />
       </div>
     </div>
+    <div class="inner"></div>
   </main>
 </template>

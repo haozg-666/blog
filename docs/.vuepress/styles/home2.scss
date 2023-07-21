@@ -4,7 +4,6 @@
 
 .home2 {
   padding: var(--navbar-height) 0 0;
-  max-width: var(--homepage-width);
   margin: 0 auto;
 
   .first {
@@ -46,5 +45,9 @@
     display: block;
     margin: 1.5rem auto;
     background-color: #fff;
+  }
+
+  .inner {
+    max-width: var(--homepage-width);
   }
 }

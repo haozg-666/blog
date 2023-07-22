@@ -1,4 +1,5 @@
 <script setup>
+import {defineProps} from "vue";
 const props = defineProps({
   menuInfo: {
     type: Object,

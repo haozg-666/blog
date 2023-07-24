@@ -4,22 +4,25 @@
         v-for="(item, index) in list"
         :key="index"
         ref="refDOMS">
-      <span v-for="(itemC, indexC) in item"
-            :key="indexC"
-            v-text="itemC.letter"
-            :style="{'--delay': `${itemC.delay}s`}"></span>
+      <template v-if="refreshList">
+        <span v-for="(itemC, indexC) in item"
+              :key="indexC"
+              v-text="itemC.letter"
+              :style="{'--delay': `${itemC.delay}s`}"></span>
+      </template>
     </li>
   </ul>
 </template>
 
 <script setup lang="ts">
-import {defineProps, ref, onMounted, onUnmounted, watch} from "vue";
+import {defineProps, ref, onMounted, onUnmounted, watch, nextTick} from "vue";
 
 const props = defineProps({
   text: String
 });
 
-let list  = ref([]);
+let list = ref([]);
+let refreshList = ref(true);
 const refDOMS = ref([]);
 
 watch(() => props.text, (val) => {
@@ -56,12 +59,16 @@ function handleLiAnimate() {
         li.classList.add('ended')
 
         if (liIdx === refDOMS.value.length - 1) {
+          clearTimeout(timer);
           timer = setTimeout(() => {
             refDOMS.value.forEach((li) => {
               li.classList.remove('ing');
               li.classList.remove('ended');
             });
-            handleLiAnimate();
+            refreshList.value = false;
+            nextTick(() => {
+              refreshList.value = true;
+            })
           }, 3000)
         }
       }

@@ -4,6 +4,8 @@ title: 目录
 readingTime: false
 comment: false
 timeLine: false
+contributors: false
+lastUpdated: false
 ---
 
 - 介绍

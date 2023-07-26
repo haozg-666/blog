@@ -26,14 +26,8 @@ export default defineUserConfig({
   theme: defaultTheme({
     logo: '/images/logo.png',
     navbar: [
-      // NavbarItem
-      // {
-      //   text: '导航',
-      //   link: '/nav/',
-      // },
-      // NavbarGroup
       {
-        text: '三大件',
+        text: '基础三大件',
         children: [
           {
             text: 'html',
@@ -88,22 +82,20 @@ export default defineUserConfig({
         text: '时间轴',
         link: '/timeline',
       },
-      // 字符串 - 页面文件路径
-      // '/bar/README.md',
     ],
     sidebar: {
-      '/guide/': [
-        {
-          text: 'Guide',
-          children: ['/guide/README.md', '/guide/getting-started.md'],
-        },
-      ],
+      // '/guide/': [
+      //   {
+      //     text: 'Guide',
+      //     children: ['/guide/README.md', '/guide/getting-started.md'],
+      //   },
+      // ],
       '/js/': [
+        '/js/README.md',
         {
           text: '介绍',
           collapsible: true,
           children: [
-            '/js/README.md',
             '/js/debounceAndThrottle.md',
             '/js/interceptorsAxios.md'
           ],

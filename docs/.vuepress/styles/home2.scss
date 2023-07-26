@@ -6,6 +6,10 @@
   padding: var(--navbar-height) 0 0;
   margin: 0 auto;
 
+  ul,li {
+    list-style: none;
+  }
+
   .first {
     display: flex;
     flex-direction: column;

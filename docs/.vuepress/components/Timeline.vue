@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { usePageData, withBase } from '@vuepress/client';
 
-import { usePages as usePagesGuide } from '@temp/page-guide';
 import { usePages as usePagesCss } from '@temp/page-css';
 import { usePages as usePagesJs } from '@temp/page-js';
 import { usePages as usePagesHtml } from '@temp/page-html';
@@ -11,8 +10,11 @@ const all = ref([]);
 
 const page = usePageData();
 
-const times = [...usePagesGuide(), ...usePagesCss(), ...usePagesJs(), ...usePagesHtml()].sort((a, b) => b.git.updatedTime - a.git.updatedTime);
+const times = [...usePagesCss(), ...usePagesJs(), ...usePagesHtml()].sort((a, b) => b.git.updatedTime - a.git.updatedTime);
 times.forEach(i => {
+  if (i.frontmatter && typeof i.frontmatter.timeLine !== 'undefined' && !i.frontmatter.timeLine) {
+    return;
+  }
   const date = new Date(i.git.updatedTime);
   const year = date?.getFullYear();
   const month = date ? date.getMonth() + 1 : null;

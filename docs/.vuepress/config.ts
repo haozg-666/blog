@@ -157,7 +157,6 @@ export default defineUserConfig({
     registerComponentsPlugin({
       componentsDir: path.resolve(__dirname, './components'),
     }),
-    usePagesPlugin({ startsWith: '/guide/', file: 'page-guide.js' }),
     usePagesPlugin({ startsWith: '/css/', file: 'page-css.js' }),
     usePagesPlugin({ startsWith: '/html/', file: 'page-html.js' }),
     usePagesPlugin({ startsWith: '/js/', file: 'page-js.js' }),

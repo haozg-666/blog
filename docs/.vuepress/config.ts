@@ -100,6 +100,16 @@ export default defineUserConfig({
             '/js/interceptorsAxios.md'
           ],
         }
+      ],
+      '/vue2/': [
+        '/vue2/README.md',
+        {
+          text: '【KKB】vue2学习',
+          collapsible: true,
+          children: [
+            '/vue2/vue_01.md'
+          ],
+        }
       ]
     },
     sidebarDepth: 0,
@@ -112,7 +122,7 @@ export default defineUserConfig({
   }),
   markdown: {
     headers: {
-      level: [2, 3, 4, 5, 6]
+      level: [1, 2, 3, 4, 5, 6]
     }
   },
   plugins: [

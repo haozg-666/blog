@@ -8,6 +8,10 @@ const props = defineProps({
   hash: {
     type: String,
     default: ''
+  },
+  baseLevel: {
+    type: Number,
+    default: 1
   }
 });
 </script>
@@ -18,7 +22,7 @@ const props = defineProps({
       { active: hash === `#${props.menuInfo.slug}` },
     ]">
       <a class="g-toc-link"
-         :style="{'padding-left': `${ Math.max(0, props.menuInfo.level - 1) * 8}px`}"
+         :style="{'padding-left': `${ Math.max(0, props.menuInfo.level + 1 - baseLevel) * 8}px`}"
          :href="`#${props.menuInfo.slug}`">{{ props.menuInfo.title }}</a>
     <ul class="g-toc-menu">
       <template v-for="(item, index) in props.menuInfo.children" :key="index">
@@ -30,7 +34,7 @@ const props = defineProps({
         <li v-else
             :class="['g-toc-level', 'g-toc-level-'+item.level,  { active: hash === `#${item.slug}` }]">
           <a class="g-toc-link"
-             :style="{'padding-left': `${ Math.max(0, item.level - 1) * 8}px`}"
+             :style="{'padding-left': `${ Math.max(0, item.level + 1 - baseLevel) * 8}px`}"
              :href="`#${item.slug}`">{{ item.title }}</a>
         </li>
       </template>

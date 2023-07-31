@@ -6,6 +6,7 @@ description: 【01】手写简单版vue
 
 # 理解Vue的设计思想 MVVM
 将视图View的状态和行为抽象化，让我们将视图UI和业务逻辑分开。
+![原理](./vue2-mvvm.png)
 
 MVVM的三要素：数据响应式、模板引擎、渲染
 数据响应式：监听数据变化并在视图中更新
@@ -127,10 +128,66 @@ obj.arr.push(4);
 
 #### Kvue
 框架构造函数：执行初始化
-+ 执行初始化，对data执行响应化处理
++ 执行初始化，对data执行响应化处理，主要是下面代码中的`proxy`
   ```js
-//
-```
+  function defineReactive(obj, key, val) {
+    observe(val);
+    Object.defineProperty(obj, key, {
+      get() {
+        console.log('get', key);
+        return val;
+      },
+      set(v) {
+        if (v !== val) {
+          val = v;
+          observe(v);
+          console.log('set', key, val);
+          // update(val);
+        }
+      },
+    })
+  }
+
+  function observe(obj) {
+    if (typeof obj !== 'object' || obj === null) {
+      return obj;
+    }
+    Object.keys(obj).forEach(key => defineReactive(obj, key, obj[key]));
+  }
+  
+  function proxy(vm) {
+    Object.keys(vm.$data).forEach(key => {
+      Object.defineProperty(vm, key, {
+        get() {
+          return vm.$data[key];
+        },
+        set(val) {
+          vm.$data[key] = val;
+        }
+      })
+    })
+  }
+
+  class Kvue {
+    constructor(options) {
+      // 1.保存选项
+      this.$options = options;
+      this.$data = options.data;
+      // 2.对data选项做响应式处理
+      observe(this.$data);
+      // 2.5代理
+      proxy(this);
+      // 3.编译
+    }
+  }
+  ```
++ 编译 Compile
+  编译模板中Vue模板特殊语法，初始化视图、更新视图
+  编译dom->遍历子节点->编译节点（编译文本）->遍历属性(事件)->监听input、处理textContent、innerHtml、绑定click等
+  
+  
+
+
 
 
 

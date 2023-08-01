@@ -127,67 +127,218 @@ obj.arr.push(4);
 + Dep：管理多个watcher，批量更新
 
 #### Kvue
-框架构造函数：执行初始化
-+ 执行初始化，对data执行响应化处理，主要是下面代码中的`proxy`
-  ```js
-  function defineReactive(obj, key, val) {
-    observe(val);
-    Object.defineProperty(obj, key, {
+框架构造函数：执行初始化 
+执行初始化，对data执行响应化处理，主要是下面代码中的`proxy`
+```js
+function defineReactive(obj, key, val) {
+  observe(val);
+  // 创建一个dep实例
+  const dep = new Dep();
+  Object.defineProperty(obj, key, {
+    get() {
+      console.log('get', key);
+      // 依赖收集
+      Dep.target && dep.addDep(Dep.target);
+      return val;
+    },
+    set(v) {
+      if (v !== val) {
+        val = v;
+        observe(v);
+        console.log('set', key, val);
+        // update();
+        dep.notify();
+      }
+    },
+
+  })
+}
+
+function observe(obj) {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  Object.keys(obj).forEach(key => defineReactive(obj, key, obj[key]));
+}
+
+function proxy(vm) {
+  Object.keys(vm.$data).forEach(key => {
+    Object.defineProperty(vm, key, {
       get() {
-        console.log('get', key);
-        return val;
+        return vm.$data[key];
       },
-      set(v) {
-        if (v !== val) {
-          val = v;
-          observe(v);
-          console.log('set', key, val);
-          // update(val);
+      set(val) {
+        vm.$data[key] = val;
+      }
+    })
+  })
+}
+
+class Kvue {
+  constructor(options) {
+    // 1.保存选项
+    this.$options = options;
+    this.$data = options.data;
+    // 2.对data选项做响应式处理
+    observe(this.$data);
+    // 2.5代理
+    proxy(this);
+    // 3.编译
+    new Compile(options.el, this);
+  }
+}
+```
+
+#### 编译 Compile
+编译模板中Vue模板特殊语法，初始化视图、更新视图
+编译dom->遍历子节点->编译节点（编译文本）->遍历属性(事件)->监听input、处理textContent、innerHtml、绑定click等
+```js
+class Compile {
+  constructor(el, vm) {
+    // 保存Kvue实例
+    this.$vm = vm;
+    // 编译模板树
+    this.compile(document.querySelector(el));
+  }
+
+  // el模板根节点
+  compile(el) {
+    // 遍历el
+    // 1.获取el所有子节点
+    el.childNodes.forEach(node => {
+      if (node.nodeType === 1) {
+        // 元素
+        // console.log('element', node.nodeName);
+        this.compileElement(node);
+        // 继续递归
+        if (node.childNodes.length > 0) {
+          this.compile(node);
         }
-      },
+      } else if (this.isInter(node)) {
+        // 插值文本
+        // console.log('text', node.textContent);
+        this.compileText(node);
+      }
     })
   }
 
-  function observe(obj) {
-    if (typeof obj !== 'object' || obj === null) {
-      return obj;
-    }
-    Object.keys(obj).forEach(key => defineReactive(obj, key, obj[key]));
-  }
-  
-  function proxy(vm) {
-    Object.keys(vm.$data).forEach(key => {
-      Object.defineProperty(vm, key, {
-        get() {
-          return vm.$data[key];
-        },
-        set(val) {
-          vm.$data[key] = val;
-        }
-      })
+  update(node, exp, dir) {
+    // 初始化
+    const fn = this[`${dir}Update`];
+    fn && fn(node, this.$vm[exp]);
+    // 更新
+    new Watcher(this.$vm, exp, function (val) {
+      fn && fn(node, val);
     })
   }
 
-  class Kvue {
-    constructor(options) {
-      // 1.保存选项
-      this.$options = options;
-      this.$data = options.data;
-      // 2.对data选项做响应式处理
-      observe(this.$data);
-      // 2.5代理
-      proxy(this);
-      // 3.编译
-    }
+  // 处理插值文本
+  compileText(node) {
+    this.update(node, RegExp.$1, 'text');
   }
-  ```
-+ 编译 Compile
-  编译模板中Vue模板特殊语法，初始化视图、更新视图
-  编译dom->遍历子节点->编译节点（编译文本）->遍历属性(事件)->监听input、处理textContent、innerHtml、绑定click等
-  
-  
 
+  textUpdate(node, val) {
+    node.textContent = val;
+  }
 
+  // 编译element
+  compileElement(node) {
+    // 1.获取当前元素的所有属性，并判断他们是不是动态属性
+    const nodeAttr = node.attributes;
+    Array.from(nodeAttr).forEach(attr => {
+      const attrName = attr.name;
+      const exp = attr.value;
+      // 判断attrName是否所指令或者事件
+      if (attrName.startsWith('k-')) {
+        // 指令
+        // 截取k-后面的部分，特殊处理
+        const dir = attrName.substring(2);
+        // 判断是否存在指令处理函数，若存在，则调用
+        this[dir] && this[dir](node, exp);
+      }
+    })
+  }
 
+  // k-text
+  text(node, exp) {
+    this.update(node, exp, 'text');
+  }
 
+  // k-html
+  html(node, exp) {
+    this.update(node, exp, 'html');
+  }
 
+  htmlUpdate(node, val) {
+    node.innerHTML = val;
+  }
+
+  // {{xxxx}}
+  isInter(node) {
+    return node.nodeType === 3 && /\{\{(.*)\}\}/.test(node.textContent);
+  }
+}
+```
+
+#### 依赖收集
+视图中会用到data中某key，这称为依赖。同一个key可能出现多次，每次都需要收集出来用一个watcher来维护它们，此过程称为依赖收集。
+多个watch需要一个dep来管理，需要更新时由dep统一通知。
+看下面案例，理出思路：
+```js
+ new Vue({
+  template: `<div>
+    <p>{{name1}}</p> 
+    <p>{{name2}}</p> 
+    <p>{{name1}}</p> 
+  </div>`,
+  data: {
+    name1: 'name1',
+    name2: 'name2',
+  }
+});
+```
+依赖（带动态数据的三个p）-> 收集 -> 变成三个watcher1/2/3 -> dep1(watcher1、watcher3) dep2(watcher2)
+实现思路：
+1. defineReactive时为每一个key创建一个Dep实例
+2. 初始化视图时读取某个key，例如name1，创建一个watcher1
+3. 由于触发name1的getter方法，便将watcher1添加到name1对应的dep中
+4. 当name1更新，setter触发时，便可通过对应dep通知其管理所有watcher更新
+![principle](./vue2-principle.png)
+ 
+#### Watcher
+```js
+// 负责具体更新任务的watcher
+class Watcher {
+  constructor(vm, key, updateFn) {
+    this.$vm = vm;
+    this.key = key;
+    this.updateFn = updateFn;
+    // 触发依赖收集
+    Dep.target = this;
+    vm[key];
+    Dep.target = null;
+  }
+
+  update() {
+    this.updateFn.call(this.$vm, this.$vm[this.key]);
+  }
+}
+```
+
+#### Dep
+```js
+// 和data中响应式的key之间是一一对应关系
+class Dep {
+  constructor() {
+    this.deps = [];
+  }
+
+  addDep(dep) {
+    this.deps.push(dep);
+  }
+
+  notify() {
+    this.deps.forEach(dep => dep.update());
+  }
+}
+```

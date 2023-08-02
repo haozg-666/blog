@@ -27,66 +27,92 @@ MVVM的三要素：数据响应式、模板引擎、渲染
 ```js
 // reactive.js
 function defineReactive(obj, key, val) {
-    // 循环
-    observe(val);
-    Object.defineProperty(obj, key, {
-        get() {
-            console.log('get', key);
-            return val;
-        },
-        set(v) {
-            if (v !== val) {
-                val = v;
-                observe(v);
-                console.log('set', key, val);
-            }
-        },
-    })
+  observe(val);
+  Object.defineProperty(obj, key, {
+    get() {
+      console.log('get', key);
+      return val;
+    },
+    set(v) {
+      if (v !== val) {
+        val = v;
+        observe(v);
+        console.log('set', key, val);
+        // update(val);
+      }
+    },
+
+  })
 }
 
+// 数组响应式
+// 1.替换数组原型的7个方法
+const rawProto = Array.prototype;
+// 备份，修改备份
+const arrayProto = Object.create(rawProto);
+['push', 'pop', 'shift', 'unshift', 'sort', 'reverse', 'splice'].forEach(method => {
+  arrayProto[method] = function () {
+    // 原始操作
+    rawProto[method].apply(this, arguments);
+    // 覆盖
+    console.log('覆盖' + method + '操作');
+    observe(...arguments);
+  }
+});
+
 function set(obj, key, val) {
-    // 新增属性再次调用监听
-    defineReactive(obj, key, val);
+  defineReactive(obj, key, val);
 }
 
 function observe(obj) {
-    if (typeof obj !== 'object' || obj === null) {
-        return obj;
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    // 覆盖原型，替换7个变更操作
+    obj.__proto__ = arrayProto;
+    for(let i = 0; i < obj.length; i++) {
+      observe(obj[i]);
     }
+  } else {
+    // 对象
     Object.keys(obj).forEach(key => defineReactive(obj, key, obj[key]));
+  }
 }
 
 const obj = {
-    foo: 'foo',
-    bar: 'bar',
-    baz: {
-        a: 1
-    },
-    arr: [1, 2, 3],
+  foo: 'foo',
+  bar: 'bar',
+  baz: {
+    a: 1
+  },
+  arr: [1, 2, 3],
 };
 // 对obj进行响应式处理
 observe(obj);
-
+// defineReactive(obj, 'foo', ' foooooo');
 obj.foo; // get
 obj.foo = '111'; // set
 obj.bar; // get
 obj.bar = '222'; // set
 obj.baz; // get
 obj.baz.a = 'aaa'; // set
-obj.baz = {   // set
-    a: 10
+obj.baz = {
+  a: 10
 }
-obj.baz.a = '10aaa'; // set
+obj.baz.a = '10aaa';
 obj.doo = 'doo';
 obj.doo;
 set(obj, 'doo', 'doo');
-obj.doo = 'doo1'; // set
-obj.doo; // get
+obj.doo = 'doo1';
+obj.doo;
 
 // 数组  重写数组的7个方法实现拦截  push pop shift unshift sort splice reverse
-obj.arr[0]; // get
-obj.arr[0] = 2; // set
-obj.arr.push(4);
+obj.arr[0];
+obj.arr[0] = 2;
+const temp = {b: 1}
+obj.arr.push(temp);
+temp.b = 2;
 ```
 数组使用索引访问和赋值可以被监听到，但是使用Array的方法操作数组就监听不到了。
 要想实现监听，就需要重写数组的7个方法实现拦截。
@@ -237,10 +263,6 @@ class Compile {
     this.update(node, RegExp.$1, 'text');
   }
 
-  textUpdate(node, val) {
-    node.textContent = val;
-  }
-
   // 编译element
   compileElement(node) {
     // 1.获取当前元素的所有属性，并判断他们是不是动态属性
@@ -248,7 +270,7 @@ class Compile {
     Array.from(nodeAttr).forEach(attr => {
       const attrName = attr.name;
       const exp = attr.value;
-      // 判断attrName是否所指令或者事件
+      // 判断attrName是否有指令
       if (attrName.startsWith('k-')) {
         // 指令
         // 截取k-后面的部分，特殊处理
@@ -256,12 +278,23 @@ class Compile {
         // 判断是否存在指令处理函数，若存在，则调用
         this[dir] && this[dir](node, exp);
       }
+      // 判断attrName是否有事件
+      if (attrName.startsWith('@')) {
+        // @click="onclick"
+        const dir = attrName.substring(1);
+        // 事件监听
+        this.eventHandler(node, exp, dir);
+      }
     })
   }
 
   // k-text
   text(node, exp) {
     this.update(node, exp, 'text');
+  }
+
+  textUpdate(node, val) {
+    node.textContent = val;
   }
 
   // k-html
@@ -273,9 +306,29 @@ class Compile {
     node.innerHTML = val;
   }
 
+  // k-model
+  model(node, exp) {
+    // update方法只完成赋值和更新
+    this.update(node, exp, 'model');
+    // 事件监听
+    node.addEventListener('input', e => {
+      this.$vm[exp] = e.target.value;
+    })
+  }
+
+  modelUpdate(node, val) {
+    node.value = val;
+    node.value = val;
+  }
+
   // {{xxxx}}
   isInter(node) {
     return node.nodeType === 3 && /\{\{(.*)\}\}/.test(node.textContent);
+  }
+
+  eventHandler(node, exp, dir) {
+    const fn = this.$vm.$options.methods && this.$vm.$options.methods[exp];
+    node.addEventListener(dir, fn.bind(this.$vm));
   }
 }
 ```

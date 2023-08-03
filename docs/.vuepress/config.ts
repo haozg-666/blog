@@ -107,7 +107,8 @@ export default defineUserConfig({
           text: '【KKB】vue2学习',
           collapsible: true,
           children: [
-            '/vue2/vue_01.md'
+            '/vue2/vue_01.md',
+            '/vue2/vue_02.md',
           ],
         }
       ]

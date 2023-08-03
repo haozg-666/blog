@@ -6,7 +6,7 @@ description: 【01】手写简单版vue
 
 # 理解Vue的设计思想 MVVM
 将视图View的状态和行为抽象化，让我们将视图UI和业务逻辑分开。
-![原理](./vue2-mvvm.png)
+![原理](vue_01imgs/vue2-mvvm.png)
 
 MVVM的三要素：数据响应式、模板引擎、渲染
 数据响应式：监听数据变化并在视图中更新
@@ -143,7 +143,7 @@ temp.b = 2;
 4. 由于data的某个key在一个视图中可能出现多次，所以每个key都需要一个管家Dep来管理多个watcher
 5. 将来data中数据一旦发生变化，会首先找到对应的Dep，通知所有Watcher执行更新函数
 
-![vue2原理图](./vue2-principle.png)
+![vue2原理图](vue_01imgs/vue2-principle.png)
 
 ### 涉及类型介绍
 + Kvue: 框架构造函数
@@ -356,7 +356,7 @@ class Compile {
 2. 初始化视图时读取某个key，例如name1，创建一个watcher1
 3. 由于触发name1的getter方法，便将watcher1添加到name1对应的dep中
 4. 当name1更新，setter触发时，便可通过对应dep通知其管理所有watcher更新
-![principle](./vue2-principle.png)
+![principle](vue_01imgs/vue2-principle.png)
  
 #### Watcher
 ```js

@@ -10,6 +10,7 @@ import { removeHtmlExtensionPlugin } from 'vuepress-plugin-remove-html-extension
 import { registerComponentsPlugin } from '@vuepress/plugin-register-components';
 import { usePagesPlugin } from 'vuepress-plugin-use-pages';
 import { activeHeaderLinksPlugin } from '@vuepress/plugin-active-header-links';
+import { photoSwipePlugin } from "vuepress-plugin-photo-swipe";
 
 const __dirname = getDirname(import.meta.url)
 
@@ -118,7 +119,8 @@ export default defineUserConfig({
     lastUpdatedText: '上次编辑于',
     contributorsText: '贡献者',
     themePlugins: {
-      backToTop: false
+      backToTop: false,
+      mediumZoom: false,
     }
   }),
   markdown: {
@@ -173,6 +175,9 @@ export default defineUserConfig({
     usePagesPlugin({ startsWith: '/js/', file: 'page-js.js' }),
     activeHeaderLinksPlugin({
       headerLinkSelector: '.g-toc-link'
+    }),
+    photoSwipePlugin({
+      // 你的选项
     }),
   ],
 })

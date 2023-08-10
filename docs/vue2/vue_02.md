@@ -8,6 +8,8 @@ description: 【01】初始化和响应式
 + vue初始化过程剖析
 + 深入理解数据响应式
 
+[总结的思维导图](https://www.processon.com/mindmap/64d391ece55181435686cc5f)
+
 ## 文件结构
 根目录：
 

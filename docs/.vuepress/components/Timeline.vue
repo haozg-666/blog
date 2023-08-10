@@ -5,12 +5,18 @@ import { usePageData, withBase } from '@vuepress/client';
 import { usePages as usePagesCss } from '@temp/page-css';
 import { usePages as usePagesJs } from '@temp/page-js';
 import { usePages as usePagesHtml } from '@temp/page-html';
+import { usePages as usePagesVue2 } from '@temp/page-vue2';
 const headers = ref([]);
 const all = ref([]);
 
 const page = usePageData();
 
-const times = [...usePagesCss(), ...usePagesJs(), ...usePagesHtml()].sort((a, b) => b.git.updatedTime - a.git.updatedTime);
+const times = [
+  ...usePagesCss(),
+  ...usePagesJs(),
+  ...usePagesHtml(),
+  ...usePagesVue2(),
+].sort((a, b) => b.git.updatedTime - a.git.updatedTime);
 times.forEach(i => {
   if (i.frontmatter && typeof i.frontmatter.timeLine !== 'undefined' && !i.frontmatter.timeLine) {
     return;

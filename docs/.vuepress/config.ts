@@ -173,6 +173,7 @@ export default defineUserConfig({
     usePagesPlugin({ startsWith: '/css/', file: 'page-css.js' }),
     usePagesPlugin({ startsWith: '/html/', file: 'page-html.js' }),
     usePagesPlugin({ startsWith: '/js/', file: 'page-js.js' }),
+    usePagesPlugin({ startsWith: '/vue2/', file: 'page-vue2.js' }),
     activeHeaderLinksPlugin({
       headerLinkSelector: '.g-toc-link'
     }),

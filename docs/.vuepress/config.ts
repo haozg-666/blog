@@ -110,6 +110,7 @@ export default defineUserConfig({
           children: [
             '/vue2/vue_01.md',
             '/vue2/vue_02.md',
+            '/vue2/vue_03.md',
           ],
         }
       ]

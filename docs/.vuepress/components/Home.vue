@@ -22,7 +22,7 @@ const heroImage = computed(() => {
         <img class="img" :src="withBase(heroImage)" alt="">
         <typing-text text="种一棵树最好的时间是十年前 其次就是现在"></typing-text>
 <!--        <div class="radial">种一棵树最好的时间是十年前<br>其次就是现在</div>-->
-        <img class="github-image" src="https://ghchart.rshah.org/haozg-666" alt="我的 GitHub 贡献图" />
+        <img class="github-image" src="https://ghchart.rshah.org/ahaozg" alt="我的 GitHub 贡献图" />
       </div>
     </div>
     <div class="inner"></div>

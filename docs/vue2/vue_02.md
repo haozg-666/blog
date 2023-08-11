@@ -1,7 +1,7 @@
 ---
 lang: zh-CN
 title: 【02】初始化和响应式
-description: 【01】初始化和响应式
+description: 【02】初始化和响应式
 ---
 
 # 目标

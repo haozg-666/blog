@@ -8,6 +8,8 @@ description: 【03】异步更新、VNode、Diff
 + 理解Vue批量异步更新策略
 + 掌握虚拟DOM和Diff算法
 
+[总结的思维导图](https://www.processon.com/mindmap/64d391ece55181435686cc5f)
+
 ## 异步更新队列
 Vue高效的秘诀是一套批量、异步的更新策略。
 

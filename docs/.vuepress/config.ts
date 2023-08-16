@@ -112,6 +112,7 @@ export default defineUserConfig({
             '/vue2/vue_02.md',
             '/vue2/vue_03.md',
             '/vue2/vue_04.md',
+            '/vue2/vue_05.md',
           ],
         }
       ]

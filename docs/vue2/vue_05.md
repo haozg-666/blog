@@ -96,9 +96,14 @@ return function render(_ctx, _cache) {
 `Vue 3`：[compiler-core/src/codegen.ts](https://github1s.com/vuejs/core/blob/main/packages/compiler-core/src/codegen.ts#L586-L587)
 
 ## 3. 简述vue生命周期
-###思路
+### 思路
 1. 给出概念
 2. 列举生命周期各阶段
 3. 阐述整体流程
 4. 结合实践
 5. 扩展：vue3变化
+
+### 回答范例
+1. 每个Vue组件实例被创建后都会经过一系列初始化布置，比如，数据观测，模板编译，挂载实例到dom上，以及数据变化时更新dom。这个过程中会运行叫做生命周期的函数，以便用户在特定阶段有机会添加它们自己的代码。
+2. Vue生命周期总共可以分为8个函数，创建前后，载入前后，更新前后，销毁前后，以及一些特殊场景的生命周期。vue3新增了三个用于调试和服务端渲染场景。
+

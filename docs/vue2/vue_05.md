@@ -318,7 +318,7 @@ const Comp = {
 ### 可能的追问
 Vue.extend方法你用过吗？它能用来做组件扩展吗？
 + 作用所扩展组件生成一个构造器，通常和$mount一起使用
-+ 二次封装element的message组件
++ ElementUI里的$message，我们使用this.$message('hello')的时候，其实就是通过这种方式创建一个组件实例，然后再将这个组件挂载到了body上
 
 ## 6.子组件可以修改父组件中的数据吗 onw-way data flow
 

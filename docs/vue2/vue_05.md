@@ -269,14 +269,14 @@ const Comp = {
 
 子组件Child
 
-```html
+```vue
 <div>
   <slot>这个内容会被父组件传递的内容替换</slot>
 </div>
 ```
 父组件Parent
 
-```html
+```vue
 <div>
 	<Child>来自老爹的内容</Child>
 </div>
@@ -321,8 +321,80 @@ Vue.extend方法你用过吗？它能用来做组件扩展吗？
 + ElementUI里的$message，我们使用this.$message('hello')的时候，其实就是通过这种方式创建一个组件实例，然后再将这个组件挂载到了body上
 
 ## 6.子组件可以修改父组件中的数据吗 onw-way data flow
+### 思路
+1. 讲讲单项数据流原则，表明为何不能这么做
+2. 举几个场景场景的例子说说解决方案
+3. 结合实践讲讲如果需要修改父组件状态应该如何做
 
-## 7.Vue项目权限如何做
+### 回答范例
+1. 所有的prop都使得其父子之间形成了一个单选下行绑定；父级prop的更新会向下流动到子组件中，但是反过来不行。这样会防止从子组件意外变更父组件状态，从而导致你的应用的数据流向难以理解。另外，每次父级组件发生变更时，子组件所有的prop都将会刷新为最新的值。这意味着你不应该在一个子组件内部改变prop。如果你这样做了,Vue会在浏览器控制台中发出警告。 const props = defineProps(['foo']) // ❌ 下面行为会被警告, props是只读的! props.foo = 'bar'
+2. 实际开发过程中会有两个场景会想要修改一个属性
+   + 这个prop用来传递一个初始值；这个子组件接下来希望将其作为本地的prop数据来使用。再这种情况下，最好定义一个本地的data，并将这个prop用作初始值。const props = defineProps(['initialCounter']) const counter = ref(props.initialCounter)
+   + 这个prop以一种原始的值传入且需要进行转换。再这种情况下，最好使用这个prop的值来定义一个计算属性：const props = defineProps(['size']) // prop变化，计算属性自动更新 const normalizedSize = computed(() => props.size.trim().toLowerCase())
+3. 实践中如果确实想要改变父组件属性应该emit一个事件，让父组件去做这个变更。注意虽然我们不能直接修改一个传入的对象或数组类型的prop，但是我们还是能够修改内嵌的对象或属性。
+
+## 7.Vue项目权限管理如何做
+### 分析
+综合实践题目，实际开发中经常需要面临权限管理的需求，考查实际应用能力。
+
+权限管理一般需求是两个，页面权限和按钮权限，从这两个方面论述即可。
+
+### 思路
+1. 权限管理需求分析：页面和按钮权限
+2. 权限系统的实现方案：分后端方案和前端方案阐述
+3. 说说各自的优缺点
+
+### 回答范例
+1. 权限管理一般需求是**页面权限**和**按钮权限**的管理
+2. 具体实现的时候分后端和前端两种方案
+   + 前端方案会**把所有路由信息再前端配置**，通过路由守卫要求用户登录，用户**登录后根据角色过滤路由表**。比如我会配置一个`asyncRoutes`数组，需要认证的页面在其路由的meta中添加一个roles字段，等获取用户角色之后取两者的交集，若结果不为空则说明可以访问。此过滤过程结束，剩下的路由就是改用户能访问的页面，**最后通过router.addRoute(accessRoutes)方式动态添加路由**即可。
+   + 后端方案会**把所有页面路由信息存在数据库中**，用户登录的时候根据其角色**查询得到其能访问的所有页面路由信息**返回给前端，前端**再通过addRoutes动态添加路由**信息
+   + 按钮权限的控制通常会**实现一个指令**，例如`v-permission`，**将按钮要求角色通过值传递给v-permission指令**，在指令的mounted钩子中可以**判断当前用户角色和按钮是否存在交集**，有则保留按钮，无则移除按钮
+3. 纯前端方案的优点是实现简单，不需要额外权限管理页面，但是维护起来问题比较大，有新的页面和角色需求就要修改前端代码重新打包部署；服务端方案就不存在这个问题，通过专门的角色和权限管理页面，配置页面和按钮权限信息到数据库，应用每次登陆时获取的都是最新的路由信息，可谓一劳永逸！
+
+### 知其所以然
+路由守卫
+
+[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L13-L14](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L13-L14)
+
+路由生成
+
+[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/store/modules/permission.js#L50-L51](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/store/modules/permission.js#L50-L51)
+
+动态追加路由
+
+[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L43-L44](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L43-L44)
+
+### 可能的追问
+1. 类似Tabs这类组件能不能使用v-permission指令实现按钮权限控制？
+```vue
+<el-tabs> 
+  <el-tab-pane label="⽤户管理" name="first">⽤户管理</el-tab-pane> 
+	<el-tab-pane label="⻆⾊管理" name="third">⻆⾊管理</el-tab-pane>
+</el-tabs>
+```
+2. 服务端返回的路由信息如何添加到路由器中？
+```js
+// 前端组件名和组件映射表
+const map = {
+  //xx: require('@/views/xx.vue').default // 同步的⽅式
+  xx: () => import('@/views/xx.vue') // 异步的⽅式
+}
+// 服务端返回的asyncRoutes
+const asyncRoutes = [
+  { path: '/xx', component: 'xx',... }
+]
+// 遍历asyncRoutes，将component替换为map[component]
+function mapComponent(asyncRoutes) {
+  asyncRoutes.forEach(route => {
+    route.component = map[route.component];
+    if(route.children) {
+      route.children.map(child => mapComponent(child))
+    }
+	})
+}
+mapComponent(asyncRoutes)
+```
 
 ## 8.说说对Vue数据响应式的理解
 

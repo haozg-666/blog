@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineEmits, computed, ref} from "vue";
+import {computed, ref} from "vue";
 import {useRoute} from 'vue-router';
 import { usePageData } from '@vuepress/client';
 

@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import {defineProps, ref, onMounted, onUnmounted, watch, nextTick} from "vue";
+import {ref, onMounted, onUnmounted, watch, nextTick} from "vue";
 
 const props = defineProps({
   text: String

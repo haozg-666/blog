@@ -92,8 +92,8 @@ return function render(_ctx, _cache) {
 ```
 
 源码中找答案：
-`Vue 2`：[compiler/codegen/index.js](https://github1s.com/vuejs/vue/blob/dev/src/compiler/codegen/index.js#L65-L69)
-`Vue 3`：[compiler-core/src/codegen.ts](https://github1s.com/vuejs/core/blob/main/packages/compiler-core/src/codegen.ts#L586-L587)
++ [Vue 2](https://github1s.com/vuejs/vue/blob/dev/src/compiler/codegen/index.js#L65-L69)
++ [Vue 3](https://github1s.com/vuejs/core/blob/main/packages/compiler-core/src/codegen.ts#L586-L587)
 
 ## 3. 简述vue生命周期
 ### 思路
@@ -139,13 +139,8 @@ return function render(_ctx, _cache) {
    1. setup和created谁先执行？
    2. setup中为什么没有beforeCreated和created?
 ### 知其所以然
-vue3中生命周期的派发时刻：
-
-[https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/componentOptions.ts#L554-L555](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/componentOptions.ts#L554-L555)
-
-vue2中声明周期的派发时刻：
-
-[https://github1s.com/vuejs/vue/blob/HEAD/src/core/instance/init.js#L55-L56](https://github1s.com/vuejs/vue/blob/HEAD/src/core/instance/init.js#L55-L56)
++ [vue3中生命周期的派发时刻](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/componentOptions.ts#L554-L555)
++ [vue2中声明周期的派发时刻](https://github1s.com/vuejs/vue/blob/HEAD/src/core/instance/init.js#L55-L56)
 
 ## 4.v-model使用和原理
 ### 思路分析
@@ -353,17 +348,9 @@ Vue.extend方法你用过吗？它能用来做组件扩展吗？
 3. 纯前端方案的优点是实现简单，不需要额外权限管理页面，但是维护起来问题比较大，有新的页面和角色需求就要修改前端代码重新打包部署；服务端方案就不存在这个问题，通过专门的角色和权限管理页面，配置页面和按钮权限信息到数据库，应用每次登陆时获取的都是最新的路由信息，可谓一劳永逸！
 
 ### 知其所以然
-路由守卫
-
-[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L13-L14](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L13-L14)
-
-路由生成
-
-[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/store/modules/permission.js#L50-L51](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/store/modules/permission.js#L50-L51)
-
-动态追加路由
-
-[https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L43-L44](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L43-L44)
++ [路由守卫](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L13-L14)
++ [路由生成](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/store/modules/permission.js#L50-L51)
++ [动态追加路由](https://github1s.com/PanJiaChen/vue-element-admin/blob/HEAD/src/permission.js#L43-L44)
 
 ### 可能的追问
 1. 类似Tabs这类组件能不能使用v-permission指令实现按钮权限控制？
@@ -397,18 +384,224 @@ mapComponent(asyncRoutes)
 ```
 
 ## 8.说说对Vue数据响应式的理解
+### 思路分析
+1. 啥是响应式
+2. 为什么Vue需要响应式
+3. 它能给我们带来什么好处
+4. Vue的响应式是怎么实现的？有哪些优缺点
+5. Vue3中的响应式的新变化
+
+### 回答范例
+1. 所谓数据响应式就是能够使数据变化可以被检查并对这种变化做出响应的机制
+2. mvvm框架中要解决的一个核心问题是连接数据层和视图层，通过数据驱动应用，数据变化，视图更新，要做到这点就需要对数据做响应式处理，这样一旦数据发生变化就可以立即做出更新处理
+3. 以vue为例说明，通过数据响应式加上虚拟dom和patch算法，可以使我们只需要操作数据，完全不用接触繁琐的dom操作，从而大大提升开发效率，降低开发难度
+4. vue2中的数据响应式会根据数据类型来做不同处理，如果是对象则采用Object.defineProperty()的方式定义数据拦截，当数据被访问或发生变化时，我们感知并作出响应；如果是数组则通过覆盖该数组原型的办法，扩展它的7个变更方法，使这些方法可以额外的做更新通知，从而作出响应。这种机制很好的解决了数据响应化的问题，但在实际使用中也存在一些缺点：比如初始化时的递归遍历会造成性能损失；新增或删除属性时需要用户使用Vue.set/delete这样特殊的api才能生效；对于es6中新增的Map、Set这种数据结构不支持等问题
+5. 为了解决这些问题，vue3重新编写了这一部分的实现：利用ES6的proxy机制代理要响应化的数据，它有很多好处，编程体验一致，不需要使用特殊api，初始化性能和内存消耗都得到了大幅改善；另外由于响应化的实现代码抽取为独立的reactivity包，使得我们可以更灵活的使用它，我们甚至不需要引入vue都可以体验。
+
+### 知其所以然
++ [vue2响应式](https://github1s.com/vuejs/vue/blob/HEAD/src/core/observer/index.ts#L128)
++ [vue3响应式 reactive](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/reactive.ts#L89-L90)
++ [vue3响应式 ref](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/ref.ts#L67-L68)
 
 ## 9.虚拟DOM
+### 思路
+1. vDom是什么
+2. 引入vDom的好处
+3. vDom如何生成，又如何成为dom
+4. 再后续的diff中的作用
+
+### 回答范例
+1. 虚拟dom顾名思义就是虚拟的dom对象，它本身就是一个js对象，只不过它是通过不同的属性去描述一个视图结构
+2. 通过引入vDom我们可以获得如下好处：
+   1. **将真实元素节点抽象成VNode，有效减少直接操作dom次数，从而提高程序性能**
+      + 直接操作dom是有限制的，比如diff、clone等操作，一个真实元素上有许多的内容，如果直接对其进行diff操作，会去额外diff一些没有必要的内容；同样的，如果需要进行clone那么需要将其全部内容进行复制，这也是没有必要的。但是，如果将这些操作转移到js对象上，那么就会变的简单了
+      + 操作dom是比较昂贵的操作，频繁的dom操作容易引起页面的重绘和回流，但是通过抽象VNode进行中间处理，可以有效减少直接操作dom的次数，从而减少页面重绘和回流
+   2. **方便实现跨平台**
+      + 同一VNode节点可以渲染成不同平台上的对应的内容，比如：渲染在浏览器是dom元素节点，渲染在Native（IOS,Android）变为对应的控件、可以实现SSR、渲染到webGL中等等
+      + vue3允许开发者基于VNode实现自定义渲染器（render），以便于针对不同平台进行渲染
+3. vDom是如何生成？在vue中，我们常常会为组件编写模板-template,这个模板会被编译器-compiler编译为渲染函数，在接下来的挂载mount过程中会调用render函数，返回的对象就是虚拟dom。但是他们还不是真正的dom，所以在后续的patch过程中进一步转化为dom
+![](./vue_05imgs/vnode.png)
+4. 挂载过程结束后，vue程序进入更新流程。如果某些响应式数据发生变化，将会引起组件重新render,此时就会生成新的vdom，和上一次的渲染结果diff就能得到变化的部分，从而转换为最小量的dom操作，高效更新试图。
+
+### 知其所以然
++ [vnode定义](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/vnode.ts#L127-L128)
++ [创建vnode：createElementBlock:](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/vnode.ts#L291-L292)
++ [createVnode:](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/vnode.ts#L486-L487)
++ [mount:](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/renderer.ts#L1171-L1172)
+调试mount过程：mountComponent
 
 ## 10.diff算法
+### 分析
+![](./vue_05imgs/diff.png)
 
-## 11.
+### 思路
+1. diff算法是干什么的
+2. 它的必要性
+3. 它何时执行
+4. 具体执行方式
+5. 拔高：说一下vue3中的优化
+
+### 回答范例
+1. Vue中的diff算法称为patching算法，它由Snabbdom修改而来，虚拟DOM要想转化为真实DOM就需要通过patch方法转换
+2. 最初Vue1.x视图中每个依赖均有更新函数对应，可以做到精准更新，因此并不需要虚拟DOM和patching算法支持，但是这样粒度过细导致Vue1.x无法承载较大应用；Vue2.x中为了降低Watcher粒度，每个组件只有一个Watcher与之对应，此时就需要引入patching算法才能精准找到发生变化的地方并高效更新
+3. vue中diff执行的时刻是组件内响应式数据变更触发实例执行其更新函数时，更新函数会再次执行render函数获得最新的虚拟DOM，然后执行patch函数，并传入新旧两次虚拟DOM,通过两者比对找到变化的地方，最后将其转化为对应的DOM操作
+4. patch过程是一个递归过程，遵循深度优先、同层比较的策略；以Vue3的patch为例：
+   1. 首先判断两个节点是否为相同同类节点，不同则删除重新创建
+   2. 如果双方都是文本则更新文本内容
+   3. 如果双方都是元素节点则递归更新子元素，同时更新元素属性
+   4. 更新子节点时又分了几种情况
+      + 新的子节点是文本，老的子节点是数组则清空，并设置文本；
+      + 新的子节点是文本，老的子节点是文本，则直接更新文本；
+      + 新的子节点是数组，老的子节点是文本，则清空文本，并创建新子节点数组中的子元素
+      + 新的子节点是数组，老的子节点是数组，那么比较两组子节点，
+        + 首首：老开始和新开始相同，打补丁，游标同时向后移动
+        + 尾尾：老结束和新结束相同，打补丁，游标向前移动
+        + 首尾：老开始和新结束相同，打补丁，游标移动
+        + 尾首：老结束和新开始相同，打补丁，游标移动
+        + 首尾没有找到相同，老老实实查找
+5. vue3中引入的更新策略：编译期优化patchFlags、block等
+
+### 知其所以然
++ [patch关键代码](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/renderer.ts#L354-L355)
+
+## 11.说说你知道的vue3新特性
+### 分析
+官网列举的最值得注意的[新特性](https://v3-migration.vuejs.org/zh/)
+
+也就是下面这些
++ Composition API
++ SFC Composition API语法糖
++ Teleport传送门
++ Fragments片段
++ Emits选项
++ 自定义渲染器
++ SFC CSS变量
++ Suspense
+以上这些是api相关，另外还有很多框架特性
+
+### 回答范例
+1. api层面Vue3新特性主要包括：Composition API、SFC Composition API语法糖、Teleport传送门、Fragments 片段、Emits选项、自定义渲染器、SFC CSS变量、Suspense
+2. 另外，Vue3.0在框架层面也有很多亮眼的改进：
+   + 更快
+     + 虚拟DOM重写
+     + 编译器优化：静态提示、patchFlags、block等
+     + 基于Proxy的响应式系统
+   + 更小：更好的摇树优化
+   + 更容易维护：TypeScript + 模块化
+   + 更容易扩展
+     + 独立的响应化模块
+     + 自定义渲染器
+
+### 知其所以然
++ [体验编译器优化](https://sfc.vuejs.org/)
++ [reactive实现](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/reactive.ts#L90-L91)
 
 ## 12.vue-router动态路由有什么用？
+### 思路
+1. 什么是动态路由
+2. 什么时候使用动态路由，怎么定义动态路由
+3. 参数如何获取 
+4. 细节，注意事项
+
+### 回答范例
+1. 很多时候，我们需要**将给定匹配模式的路由映射到同一个组件**，这种情况就需要定义动态路由
+2. 例如，我们可能有一个 User 组件，它应该对所有用户进行渲染，但用户 ID 不同。在 Vue Router 中，我们可以在路径中使用一个动态字段来实现，例如：`{ path: '/users/:id', component: User }`，其中:id就是路径参数
+3. 路径参数 用冒号 : 表示。当一个路由被匹配时，它的 params 的值将在每个组件中以`this.$route.params`的形式暴露出来。
+4. 参数还可以有多个，例如`/users/:username/posts/:postId`；除了`$route.params`之外，`$route`对象还公开了其他有用的信息，如`$route.query`、`$route.hash`等。
+
+### 可能的追问
+1. [如何响应动态路由参数的变化](https://router.vuejs.org/zh/guide/essentials/dynamic-matching.html#%E5%93%8D%E5%BA%94%E8%B7%AF%E7%94%B1%E5%8F%82%E6%95%B0%E7%9A%84%E5%8F%98%E5%8C%96)
+2. [如何处理404 Not Found路由](https://router.vuejs.org/zh/guide/essentials/dynamic-matching.html#%E6%8D%95%E8%8E%B7%E6%89%80%E6%9C%89%E8%B7%AF%E7%94%B1%E6%88%96-404-Not-found-%E8%B7%AF%E7%94%B1)
 
 ## 13.如何实现一个vue-router?
+### 思路分析
+首先思考Vue路由要解决的问题：用户点击跳转链接内容切换，页面不刷新
++ 借助hash或者history api实现url跳转页面不刷新
++ 同时监听hashchange事件或者popstate事件处理跳转
++ 根据hash值或者state值从routes表中匹配对应component并渲染它
 
-## 14.key的所用
+### 回答范例
+一个SPA应用的路由需要解决的问题是**页面跳转内容改变同时不刷新**，同时路由还需要以插件形式存在，所以：
+1. 首先我会定义一个`createRouter`函数，返回路由器实例，实例内部做几件事
+   1. 保存用户传入的配置项
+   2. 监听hash或者popstate事件
+   3. 回调里根据patch匹配对应路由
+2. 将router定义成一个Vue插件，既实现install方法，内部做两件事：
+   1. 实现两个全局组件：`router-link`和`router-view`，分别实现页面跳转和内容显示
+   2. 定义两个全局变量：`$route`和`$router`，组件内可以访问当前路由和路由器实例
+
+### 知其所以然
++ [createRouter如何创建实例](https://github1s.com/vuejs/router/blob/HEAD/src/router.ts#L355-L356)
++ [事件监听](https://github1s.com/vuejs/router/blob/HEAD/src/history/html5.ts#L314-L315)
++ [页面跳转RouterLink](https://github1s.com/vuejs/router/blob/HEAD/src/RouterLink.ts#L184-L185)
++ [内容显示RouterView](https://github1s.com/vuejs/router/blob/HEAD/src/RouterView.ts#L43-L44)
+
+## 14.key的作用
+### 思路
+1. 给出结论，key的作用是用于优化patch性能
+2. key的必要性
+3. 实际使用方式
+4. 总结：可从源码层面描述一下vue如何判断两个节点是否想过
+
+### 回答范例
+1. key的作用主要是为了更高效的更新虚拟DOM
+2. vue在patch过程中**判断两个节点是否是相同节点是key是一个必要条件**，渲染一组列表时，key往往是唯一标识，所以如果不定义key的话，vue只能认为比较的两个节点是同一个，哪怕它们实际上不是，这导致了频繁更新元素，使得整个patch过程比较低效，影响性能。
+3. 实际使用中在渲染一组列表时key必须设置，而且必须是唯一标识，应该避免使用数组索引作为key，这可能导致一些隐藏的bug；vue中在使用相同标签元素过渡切换时，也会使用key属性，其目的也是为了让vue可以区分它们，否则vue只会替换其内部属性而不会触发过渡效果。
+4. 从源码中可以知道，vue判断两个节点是否相同时主要判断两个的key和元素类型等，因此如果不设置key，它的值就是undefined，则永远认为这是两个相同节点，只能去做更新操作，这造成了大量的dom更新操作，明显是不可取的。
+
+```vue
+<template>
+  <div>
+    <p v-for="item in items" :key="item">{{item}}</p>
+  </div>
+</template>
+<script>
+export default{
+  data() {
+    return { items: ['a', 'b', 'c', 'd', 'e'] }
+  },
+  mounted () {
+    setTimeout(() => {
+      this.items.splice(2, 0, 'f')
+    }, 2000);
+  },
+};
+</script>
+```
+
+上面案例重现的是以下过程
+
+![](./vue_05imgs/key1.jpg)
+
+不使用key
+
+![](./vue_05imgs/key2.jpg)
+
+如果使用key
+
+```
+// 首次循环patch A
+A B C D E
+A B F C D E
+
+// 第2次循环patch B
+B C D E
+B F C D E
+
+// 第3次循环patch E
+C D E
+F C D E
+
+// 第4次循环patch D
+C D
+F C D
+
+// 第5次循环patch C
+C 
+F C
+
+// oldCh全部处理结束，newCh中剩下的F，创建F并插入到C前面
+```
 
 ## 15.nextTick使用和原理
 

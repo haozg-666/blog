@@ -314,6 +314,7 @@ const Comp = {
 Vue.extend方法你用过吗？它能用来做组件扩展吗？
 + 作用所扩展组件生成一个构造器，通常和$mount一起使用
 + ElementUI里的$message，我们使用this.$message('hello')的时候，其实就是通过这种方式创建一个组件实例，然后再将这个组件挂载到了body上
++ [参考](https://juejin.cn/post/6914970829621035021)
 
 ## 6.子组件可以修改父组件中的数据吗 onw-way data flow
 ### 思路
@@ -604,8 +605,71 @@ F C
 ```
 
 ## 15.nextTick使用和原理
+### 思路
+1. nextTick是啥？下定义
+2. 为什么需要它？用异步更新队列实现原理解释
+3. 我再什么地方用它呢？
+4. 介绍如何使用
+5. 说出源码实现
+
+先看看官方订阅
+> Vue.nextTick( [callback, context] )
+> 在下次 DOM 更新循环结束之后执行延迟回调。在修改数据之后立即使用这个方法，获取更新后的 DOM。
+```js
+// 修改数据
+vm.msg = 'Hello'
+// DOM 还没有更新
+Vue.nextTick(function () {
+// DOM 更新了
+})
+```
+
+### 回答范例
+1. nextTick是Vue提供的一个全局API，由于vue的异步更新策略导致我们对数据的修改不会立刻体现在dom变化上，此时如果想要立即获取更新后的dom状态，就需要使用这个方法
+2. Vue在更新DOM时是异步执行的。只要侦听到数据变化，Vue将开启一个队列，并缓冲在同一事件循环中发生的所有数据变更，如果同一个watcher被多次触发，只会被推入到队列中一次。这种在缓冲时去除重复数据对于避免不必要的计算和DOM操作所非常重要的。
+   nextTick方法会在队列中加入一个回调函数，确保该函数在前面的dom操作完成后才调用。
+3. 所以当我们想在修改数据后立即看到dom执行结果就需要用到nextTick方法。
+4. 我也有简单了解nextTick实现，它会在callbacks里面加入我们传入的函数，然后用timeFunc异步方式调用它们，首选的异步方式会是promise。这让我明白了为什么可以在nextTick中看到dom操作结果。
+
+### 回答范例
+1. [nextTick](https://cn.vuejs.org/api/general.html#nexttick)是等待下一次DOM更新刷新的工具方法。
+2. Vue有个异步更新策略，意思是如果数据变化，Vue不会立即更新DOM，而是开启一个队列，把组件更新函数保存在队列中，在同一事件循环中发生的所有数据变更会异步的批量更新。这一策略导致我们对数据的修改不会立刻体现在DOM上，此时如果想要获取更新后的DOM状态，就需要使用nextTick
+3. 开发时，有两个场景我们会用到nextTick:
+   1. created中想要获取DOM时
+   2. 响应式数据变化后获取DOM更新后的状态，比如希望获取列表更新后的高度
+4. nextTick签名如下：`function nextTick(callback? () => void): Promise<void>`
+   所以我们只需要在传入的回调函数中访问最新DOM状态即可，或者我们可以await nextTick()方法返回的Promise之后做这件事
+5. 在Vue内部，nextTick之所以能够让我们看到DOM更新后的结果，是因为我们传入的callback会被添加到队列刷新函数（flushSchedulerQueue）后面，这样等队列内部的更新函数都执行完毕，所有DOM操作也就结束了，callback自然能够获取到最新的DOM值
+
+### 知其所以然
++ [组件更新函数入队](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/renderer.ts#L1547-L1548)
++ [入队函数](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/scheduler.ts#L79)
++ [nextTick定义](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/scheduler.ts#L53)
 
 ## 16.computed和watch的区别
+### 思路
+1. 先看[computed](https://cn.vuejs.org/api/reactivity-core.html#computed)、[watch](https://cn.vuejs.org/api/reactivity-core.html#watch)两者定义，列举使用上的差异
+2. 列举使用场景上的差异，如何选择
+3. 使用细节、注意实现
+4. vue3变化
+
+### 回答范例
+1. 计算属性可以**从组件数据派生出新数据**，最常见的使用方式是设置一个函数，返回计算之后的具有响应式的结果，computed和methods的差异所它具备缓存性，如果依赖项不变时不会重新计算。侦听器**可以侦测某个响应式数据的变化并执行副作用**，常见用法是传递一个函数，执行副作用，watch没有返回值，但可以执行异步操作等复杂逻辑
+2. 计算属性常见场景是简化行内模板中的复杂表达式，模板中出现太多逻辑会使模板变得臃肿不易维护。侦听器常见场景是状态变化之后做一些往额外的DOM操作或异步操作。选择采用何种方案时首先看是否需要派生出新值，基本能用计算属性实现的方式首选计算属性
+3. 使用过程中有一些细节，比如计算属性也是可以传递对象，成为既可读又可写的计算属性。watch可以传递对象，设置deep、immediate等选项
+4. vue3watch选项发生了一些变化，例如不再能监测一个点操作符之外的字符串的表达式；reactivity API中新出现了watch、watchEffect可以完全替代目前的watch选项，且功能更加强大
+
+### 可能的追问
+1. watch会不会立即执行？
+   看immediate
+2. watch和watchEffect有什么差异？
+   [差异](https://cn.vuejs.org/guide/essentials/watchers.html#watcheffect)
+
+### 知其所以然
++ [computed的实现](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/computed.ts#L79-L80)
++ [ComputedRefImpl](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/computed.ts#L26-L27)
++ [缓存性](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/computed.ts#L45-L60)
++ [watch](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiWatch.ts#L172)
 
 ## 17.父子组件创建，挂载顺序所怎样的
 

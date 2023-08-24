@@ -672,8 +672,55 @@ Vue.nextTick(function () {
 + [watch](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiWatch.ts#L172)
 
 ## 17.父子组件创建，挂载顺序所怎样的
+### 思路
+1. 给结论
+2. 阐述理由
 
-## 18.如何缓存组件、更新组件
+### 回答范例
+1. 创建过程自下而上，挂载过程自下而上：
+   + parent created
+   + child created
+   + child mounted
+   + parent mounted
+2. 之所以会这样所因为Vue创建过程是一个递归过程，先创建父组件，有子组件就会创建子组件，因此创建时先有父组件再有子组件；子组件首次创建时会添加mounted钩子到队列，等到patch结束再执行它们，可见子组件的mounted钩子是先进入队列中的，因此等到patch结束执行这些钩子时也先执行。
+
+### 知其所以然
++ [观察beforeCreated和created钩子的处理](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/componentOptions.ts#L554-L555)
++ [观察beforeMount和mounted钩子的处理](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/renderer.ts#L1310-L1311)
+
+## 18.如何缓存组件、缓存后怎么更新？
+缓存组件使用keep-alive组件，这是一个常见且有用的优化手段，vue3中keep-alive也有比较大的更新，能说的点比较多
+### 思路
+1. 缓存用keep-alive，它的作用与用法
+2. 使用细节，例如缓存指定/排除、结合router和transition
+3. 组件缓存后更新可以利用activated或者beforeRouteEnter
+4. 原理阐述
+
+### 回答范例
+1. 开发中缓存组件使用keep-alive组件，keep-alive是vue内置组件，keep-alive包裹动态组件component时，会缓存不活动的组件实例，而不是销毁它们，这样在组件切换过程中将状态保留在内存中，防止重复渲染DOM
+```vue
+<keep-alive>
+  <component :is="view"></component>
+</keep-alive>
+```
+2. 结合属性include和exclude可以明确指定缓存哪些组件或排除缓存指定组件。vue3结合vue-router时变化较大，之前所keep-alive包裹router-view，现在需要反过来用router-view包裹keep-alive
+```vue
+<router-view v-slot="{ Component }">
+  <keep-alive>
+    <component :is="Component"></component>
+  </keep-alive>
+</router-view>
+```
+3. 缓存后如果想要获取数据，解决方案可以有以下两种：
+  + beforeRouteEnter：在有vue-router的项目，每次进入路由的时候，都会执行beforeRouteEnter
+  + actived：在keep-alive缓存的组件被激活的时候，都会执行actived钩子
+4. keep-alive是一个通用组件，它内部定义了一个map，缓存创建过的组件实例，它返回的渲染函数内部会查找内嵌的component组件对应组件的vnode，如果该组件在map中存在就直接返回它。由于component的is属性是个响应式数据，因此只要它变化，keep-alive的render函数就会重新执行。
+
+### 知其所以然
++ [KeepAlive定义](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/components/KeepAlive.ts#L73-L74)
++ [缓存定义](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/components/KeepAlive.ts#L102-L103)
++ [缓存组件](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/components/KeepAlive.ts#L215-L216)
++ [获取缓存组件](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/components/KeepAlive.ts#L241-L242)
 
 ## 19.如何从0到1架构一个vue项目
 

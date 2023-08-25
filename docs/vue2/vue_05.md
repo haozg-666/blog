@@ -723,14 +723,131 @@ Vue.nextTick(function () {
 + [获取缓存组件](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/components/KeepAlive.ts#L241-L242)
 
 ## 19.如何从0到1架构一个vue项目
+### 思路
+1. 构建项目，创建项目基本结构
+2. 引入必要的插件
+3. 代码规范：prettier eslint
+4. 提交规范：husky list-staged
+5. 其他常用：svg-loader vueuse nprogress
+6. 常见目录结构
+
+### 回答范例
+1. 从0创建一个项目我大致会做以下事情：项目创建、引入必要插件、代码规范、提交规范、常用库和组件
+2. 目前vue3项目我会用vite或者create-vue创建项目
+3. 接下来引入必要插件：路由vue-router、状态管理pinia、ui库element-plus、http工具axios
+4. 其他比较常用的库有vueuse、nprogress，图标使用icon-moon
+5. 下面是代码规范：结合prettier和eslint
+6. 最后是提交规范，可以使用husky、lint-staged、commitlint
+7. 目录结构
+   + plugins:用来放 vite 插件的 plugin 配置
+   + public：用来放一些诸如 页头icon 之类的公共文件，会被打包到dist根目录下
+   + src：用来放项目代码文件
+   + api：用来放http的一些接口配置
+   + assets：用来放一些 CSS 之类的静态资源
+   + components：用来放项目通用组件
+   + layout：用来放项目的布局
+   + router：用来放项目的路由配置
+   + store：用来放状态管理Pinia的配置
+   + utils：用来放项目中的工具方法类
+   + views：用来放项目的页面文件
 
 ## 20.你知道哪些Vue最佳实践？
+![](./vue_05imgs/bestPractice.jpg)
+
+### 思路
+查看vue官方文档
+
++ [风格指南](https://vuejs.org/style-guide/)
++ [性能](https://vuejs.org/guide/best-practices/performance.html#overview)
++ [安全](https://vuejs.org/guide/best-practices/security.html)
++ [访问性](https://vuejs.org/guide/best-practices/accessibility.html)
++ [发布](https://vuejs.org/guide/best-practices/production-deployment.html)
+
+### 回答范例
+从编码风格、性能、安全等几方面说几条：
+1. 编码风格方面
+   1. 命名组件时使用“多词”风格避免和HTML元素冲突
+   2. 使用“细节化”方式定义属性而不是只有一个属性名
+   3. 属性名声明时使用“驼峰命名”，模板或jsx中使用“肉串命名”
+   4. 使用v-for时务必加上key，且不要跟v-if写在一起
+2. 性能方面
+   1. 路由懒加载减少应用尺寸
+   2. 利用SSR减少首屏加载时间
+   3. 利用v-once渲染那些不需要更新的内容
+   4. 一些长列表可以利用虚拟滚动技术避免内存过度占用
+   5. 对于深层嵌套对象的大数组可以使用shallowRef或shallowReactive降低开销
+   6. 避免不必要的组件抽象
+3. 安全方面
+   1. 不使用不可信模板，例如使用用户输入拼接模板：template: <div> + userProvidedString + </div>
+   2. 小心使用v-html，:url，:style等，避免html、url、样式等注入
 
 ## 21.说说对vuex的理解
+单向数据流
+
+![](https://vuex.vuejs.org/flow.png)
+
+vuex
+![](https://vuex.vuejs.org/vuex.png)
+
+### 回答策略：3w1h
+1. 首先给vuex下一个定义
+2. 必要性阐述，解决了哪些问题
+3. 什么时候我们需要vuex
+4. 你的具体用法，个人思考，实践经验
+5. 简述原理
+
+> 官网定义
+> Vuex 是一个专为 Vue.js 应用程序开发的**状态管理模式**。它采用**集中式**存储管理应用的所有组件的状态，并以相应的规则保证状态以一种**可预测**的方式发生变化。
+
+### 回答范例
+1. Vuex 是一个专为 Vue.is 应用开发的状态管理模式+库。它采用集中式存储，管理应用的所有组件的状态，并以相应的规则保证状态以一种可预测的方式发生变化。
+2. 我们期待以一种简单的“单向数据流”的方式管理应用，即状态->视图->操作单向循环的方式。但当我们的应用遇到多个组件共享状态时，比如:多个视图依赖于同一状态或者来自不同视图的行为需要变更同一状态。此时单向数据流的简洁性很容易被破坏。因此，我们有必要把组件的共享状态抽取出来，以一个全局单例模式管理。通过定义和隔离状态管理中的各种概念并通过强制规则维持视图和状态间的独立性，我们的代码将会变得更结构化且易维护。这是vuex存在的必要性，它和react生态中的redux之类是一个概念。
+3. vuex并非必须的，它帮我们管理共享状态，但却带来更多的概念和框架。Vuex 解决状态管理的同时引入了不少概念: 例如state、mutation、action等，是否需要引入还需要根据应用的实际情况衡量一下:如果不打算开发大型单页应用，使用 Vuex 反而是繁琐几余的，一个简单的 store 模式就足够了。但是，如果要构建一个中大型单页应用，Vuex 基本是标配
+4. 我在使用vuex过程中有如下理解：首先是对核心概念的理解和运用，将全局状态放入state对象中，它本身一棵状态树，组件中使用store实例的state访问这些状态；然后有配套的mutation方法修改这些状态，并且只能用mutation修改状态，在组件中调用commit方法提交mutation；如果应用中有异步操作或者复杂逻辑组合，我们需要编写action，执行结束如果有状态修改仍然需要提交mutation，组件中调用这些action使用dispatch方法派发。最后是模块化，通过modules选项组织拆分出去的各个子模块，在访问状态时注意添加子模块的名称，如果子模块有设置namespace，那么在提交mutation和派发action时还需要额外的命名空间前缀。
+5. vuex在实现单项数据流时需要做到数据的响应式，通过源码的学习发现是借用了vue的数据响应化特性实现的，它会利用Vue将state作为data对其进行响应化处理，从而使得这些状态发生变化时，能够导致组件重新渲染。
 
 ## 22.从template到render发生了什么？
+### 分析
+从template到render过程，其实是问vue编译器原理
+
+### 思路
+1. 引入vue编译器概念
+2. 说明编译器的必要性
+3. 阐述编译器工作流程
+
+### 回答范例
+1. vue中有个独特的模块，称为“compiler”，它的主要作用是将用户编写的template编译为js中可执行的render函数
+2. 之所以需要这个编译过程是为了便于前端程序员能高效的编写视图模板。相比而言，我们还是更愿意用HTML来编写视图，直观且高效。手写render函数不仅效率低下，而且失去了编译期的优化能力
+3. 在Vue中编译器会先对template进行解析，这一步称为parse，结束之后的会得到一个js对象，我们称为抽象语法树AST，然后是对AST进行深加工的转换过程，这一步称为transform，最后将前面得到的AST生成JS代码，也就是render函数
+
+### 知其所以然
++ [vue3编译过程窥探](https://github1s.com/vuejs/core/blob/HEAD/packages/compiler-core/src/compile.ts#L61-L62)
+
+### 可能的追问
+1. vue中编译器何时执行？ 根据引入vue的运行时不同而不同。
+   + webpack，预打包环境，vue-loader，在打包阶段将模板编译，预编译
+   + 非运行时版本，携带编译器的vue版本，编译发生在运行时，组件创建阶段，发现组件没有render函数就会编译template
+2. react有没有编译器？
+   + jsx 不是编译器(compiler)，语言没有发生变化，是转义器(transpiler)，将jsx转成js，严格来说，没有编译器
 
 ## 23.vue实例挂载过程发生了什么？
+### 分析
+挂载过程完成了最重要的两件事：
+1. 初始化
+2. 建立更新机制（数据与视图关联）
+
+### 回答范例
+1. 挂载过程指的是app.mount()过程，这个是个初始化过程，整体上做了两件事：初始化和建立更新机制
+2. 初始化会创建组件实例，初始化组件状态，创建各种响应式数据
+3. 建立更新机制这一步会立即执行一次组件更新函数，这会首次执行组件渲染函数并执行patch将前面获得vnode转换为dom；同时首次执行渲染函数会创建它内部响应式数据和组件更新函数之间的依赖关系，这使得以后数据变化时会执行对应的更新函数
+
+### 知其所以然
++ [mount函数](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiCreateApp.ts#L319)
++ [首次render](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/renderer.ts#L2320)
+
+### 可能的追问
+1. 响应式数据怎么创建
+2. 依赖关系如何建立
 
 ## 24.Vue3设计目标和优化点有哪些？
 

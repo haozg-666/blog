@@ -1035,12 +1035,154 @@ Pinia API 与 Vuex ≤4 有很大不同，即：
 + 没有 命名空间模块。鉴于 Store 的扁平架构，“命名空间” Store 是其定义方式所固有的，您可以说所有 Store 都是命名空间的。
 
 ## 28.为什么路由需要懒加载？
+### 分析
+当打包应用时，JavaScript 包会变得非常大，影响页面加载。如果我们能把不同路由对应的组件分割成不同的代码块，然后当路由被访问时才加载对应组件，这样就会更加高效。
+```js
+// 将
+// import UserDetails from './views/UserDetails'
+// 替换为
+const UserDetails = () => import('./views/UserDetails')
+
+const router = createRouter({
+  // ...
+  routes: [{ path: '/users/:id', component: UserDetails }],
+})
+```
+
+### 思路
+1. 必要性
+2. 何时用
+3. 怎么用
+4. 使用细节
+
+### 回答范例
+1. 当打包构建应用时，JavaScript 包会变得非常大，影响页面加载。利用路由懒加载我们能把不同路由对应的组件分割成不同的代码块，然后当路由被访问的时候才加载对应组件，这样会更加高效，是一种优化手段。
+2. 一般来说，对所有的路由都使用动态导入是个好主意。
+3. 给component选项配置一个返回 Promise 组件的函数就可以定义懒加载路由。例如：`{ path: '/users/:id', component: () => import('./views/UserDetails') }`
+4. 结合注释() => import(/* webpackChunkName: "group-user" */ './UserDetails.vue')可以做webpack代码分块; vite中结合[rollupOptions](https://router.vuejs.org/zh/guide/advanced/lazy-loading.html#%E4%BD%BF%E7%94%A8-vite)定义分块
+5. 路由中不能使用异步组件
+
+### 知其所以然
+component (和 components) 配置如果接收一个返回 Promise 组件的函数，Vue Router 只会在第一次进入页面时才会获取这个函数，然后使用缓存数据。
+[参考](https://github1s.com/vuejs/router/blob/HEAD/src/navigationGuards.ts#L292-L293)
 
 ## 29.ref和reactive有何差异？
+### 体验
+[ref](https://vuejs.org/api/reactivity-core.html#ref)
+```js
+const count = ref(0)
+console.log(count.value) // 0
+
+count.value++
+console.log(count.value) // 1
+```
+
+[reactive](https://vuejs.org/api/reactivity-core.html#reactive)
+```js
+const obj = reactive({ count: 0 })
+obj.count++
+```
+
+### 思路
+1. 两者概念
+2. 两个使用场景
+3. 两者异同
+4. 使用细节
+5. 原理
+
+### 回答范例
+1. ref接收内部值，返回响应式Ref对象，reactive返回响应式代理对象
+2. 从定义上看ref通常用于处理单值的响应式，reactive用于处理对象类型的数据响应式
+3. 两者均是用来构造响应式数据，但是ref主要解决原始值的响应式问题
+4. ref返回的响应式数据在js中使用需要加上.value才能访问其值，在视图中使用会自动脱ref,不需要.value。ref可以接收对象或数组等非原始值，但内部依然是reactive实现响应式；reactive内部如果接收Ref对象会自动脱ref;使用展开运算符(...)展开reactive返回的响应式对象会使其失去响应性，可以结合toRefs()将值转换为Ref对象之后再展开
+5. reactive内部使用Proxy代理传入对象并拦截该对象各种操作(trap)，从而实现响应式。ref内部封装了一个RefImpl类，并设置get value/set value，拦截用户对值的访问，从而实现响应式。
+
+### 知其所以然
++ [ref](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/ref.ts#L73-L74)
++ [reactive](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/reactive.ts#L90-L91)
 
 ## 30.watch和watchEffect异同？
+### 体验
+watchEffect立即运行一个函数，然后被动地追踪它的依赖，当这些依赖改变时重新执行该函数。
+```js
+const count = ref(0)
+
+watchEffect(() => console.log(count.value))
+// -> logs 0
+
+count.value++
+// -> logs 1
+```
+
+watch侦测一个或多个响应式数据源并在数据源变化时调用一个回调函数。
+```js
+const state = reactive({ count: 0 })
+watch(
+  () => state.count,
+  (count, prevCount) => {
+    /* ... */
+  }
+)
+```
+
+### 思路
+1. 给出两个定义
+2. 给出场景上的不同
+3. 给出使用方式和细节
+4. 原理阐述
+
+### 回答范例
+1. watchEffect立即执行一个函数，然后被动地追踪它的依赖，当这些依赖改变时重新执行该函数。watch侦测一个或多个响应式数据源并在数据源变化时调用一个回调函数
+2. watchEffect是一种特殊的watch，传入的函数既是依赖收集的数据源也是回调函数。如果我们不关心响应式数据变化前后的值，只想拿这些数据做些事情，那么watchEffect就是我们需要的。watch更底层，可以接收多种数据源，包括用于依赖收集的getter函数，因此它完全可以实现watchEffect的功能，同时由于可以指定getter函数，依赖可以控制的更精确，还能获取数据变化前后的值，因此如果需要这些，我没会使用watch
+3. watchEffect在使用时，传入的函数会立即执行一次，watch默认情况下并不会执行回调函数，除非我们手动设置immediate选项
+4. 从实现上来说，watchEffect(fn)相当于watch(fn, fn, {immediate:true})
+
+### 知其所以然
++ [watchEffect](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiWatch.ts#L80-L81)
+```ts
+export function watchEffect(
+  effect: WatchEffect,
+  options?: WatchOptionsBase
+): WatchStopHandle {
+  return doWatch(effect, null, options)
+}
+```
++ [watch](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiWatch.ts#L158-L159)
+```ts
+export function watch<T = any, Immediate extends Readonly<boolean> = false>(
+  source: T | WatchSource<T>,
+  cb: any,
+  options?: WatchOptions<Immediate>
+): WatchStopHandle {
+  return doWatch(source as any, cb, options)
+}
+```
 
 ## 31.SPA和SSR异同？
+我们现在编写的Vue、React和Angular应用大多数情况下都会在一个页面中，点击链接跳转页面通常是内容切换而非页面跳转，由于良好的用户体验逐渐成为主流的开发模式。但同时也会有首屏加载时间长，SEO不友好的问题，因此有了SSR，这也是为什么面试中会问到两者的区别。
+
+### 思路
+1. 两者概念
+2. 两者优缺点
+3. 使用场景差异
+4. 其他选择
+
+### 回答范例
+1. SPA（Single Page Application）即单页面应用。一般也称为 客户端渲染（Client Side Render）， 简称 CSR。SSR（Server Side Render）即 服务端渲染。一般也称为 多页面应用（Mulpile Page Application），简称 MPA。
+2. SPA应用只会首次请求html文件，后续只需要请求JSON数据即可，因此用户体验更好，节约流量，服务端压力也较小。但是首屏加载的时间会变长，而且SEO不友好。为了解决以上缺点，就有了SSR方案，由于HTML内容在服务器一次性生成出来，首屏加载快，搜索引擎也可以很方便的抓取页面信息。但同时SSR方案也会有性能，开发受限等问题。
+3. 在选择上，如果我们的应用存在首屏加载优化需求，SEO需求时，就可以考虑SSR。
+4. 但并不是只有这一种替代方案，比如对一些不常变化的静态网站，SSR反而浪费资源，我们可以考虑预渲染（prerender）方案。另外nuxt.js/next.js中给我们提供了SSG（Static Site Generate）静态网站生成方案也是很好的静态站点解决方案，结合一些CI手段，可以起到很好的优化效果，且能节约服务器资源。
+
+### 知其所以然
+1. 内容生成上的区别
+
+SSR
+![](./vue_05imgs/SSR.jpeg)
+SPA
+![](./vue_05imgs/SPA.jpeg)
+
+2. 部署上的区别
+![](./vue_05imgs/deploy.jpeg)
 
 ## 32.vue-loader是什么？
 

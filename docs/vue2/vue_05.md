@@ -104,7 +104,7 @@ return function render(_ctx, _cache) {
 5. 扩展：vue3变化
 
 ### 回答范例
-1. 每个Vue组件实例被创建后都会经过一系列初始化布置，比如，数据观测，模板编译，挂载实例到dom上，以及数据变化时更新dom。这个过程中会运行叫做生命周期的函数，以便用户在特定阶段有机会添加它们自己的代码。
+1. 每个Vue组件实例被创建后都会经过一系列初始化步骤，比如，数据观测，模板编译，挂载实例到dom上，以及数据变化时更新dom。这个过程中会运行叫做生命周期的函数，以便用户在特定阶段有机会添加它们自己的代码。
 2. Vue生命周期总共可以分为8个函数，创建前后，载入前后，更新前后，销毁前后，以及一些特殊场景的生命周期。vue3新增了三个用于调试和服务端渲染场景。
 
 | 生命周期v2    | 生命周期v3          | 描述                                     |
@@ -143,7 +143,7 @@ return function render(_ctx, _cache) {
 + [vue2中声明周期的派发时刻](https://github1s.com/vuejs/vue/blob/HEAD/src/core/instance/init.js#L55-L56)
 
 ## 4.v-model使用和原理
-### 思路分析
+### 思路分析 3w1h
 1. 给出双绑订阅
 2. 双绑带来的好处
 3. 在哪里使用双绑
@@ -677,7 +677,7 @@ Vue.nextTick(function () {
 2. 阐述理由
 
 ### 回答范例
-1. 创建过程自下而上，挂载过程自下而上：
+1. 创建过程自上而下，挂载过程自下而上：
    + parent created
    + child created
    + child mounted
@@ -1184,29 +1184,549 @@ SPA
 2. 部署上的区别
 ![](./vue_05imgs/deploy.jpeg)
 
-## 32.vue-loader是什么？
+## 32.vue-loader是什么？它有什么作用
+### 体验
+使用官方提供的SFC playground可以很好的体验vue-loader。
 
-## 33.你写过自定义指令吗？
+有了vue-loader加持，我们才可以以SFC的方式快速编写代码。
+
+[Vue SFC Playground](https://play.vuejs.org/#eNp9kUFLwzAUx79KfJcqzA3ZbXQDlYF6UFHBSy6je+sy0yQkL7NQ+t19SVn1ILv1/X//l/7SdnDr3PQYERZQhsorRyIgRbeSRjXOehKd8LgTvdh524iCq4U00lTWBBJNqMUy8cviAbW24tN6vb0orqQpZ8NxfBAPhI3TG0KehCj3N6uuy8t9X854yqkyLpI4Xjd2i3opgbkERuVs3IYJUOBX71Q9PQRr2LpLuxIq2zil0b84UqwmYSEySWzDZt9POSMfcXLKqz1WX//kh9CmTMKrx4D+iBJGRhtfIw14/f6MLT+PkM2j5vYZ+IbB6pgch9pdNFvW/tPLto/52ytTf4R1S2jC6VJJNDX73JfA/+P+zNV/defTed6Tpof+B7x8phs=)
+
+### 思路
+1. 是什么
+2. 做什么用的
+3. 何时生效
+4. 如何工作
+
+### 回答范例
+1. vue-loader是用于处理单文件组件(SFC,Single-File Component)的webpack loader
+2. 因为用了vue-loader，我们就可以在项目中编写SFC格式的Vue组件，我们可以把代码分割为 <script>和<style>，代码会异常清晰。结合其他loader我们还可以用Pug编写，用sass、less编写<style>，用TS编写<script>
+3. webpack打包时，会以loader的方式调用vue-loader
+4. vue-loader被执行时，它会对SFC中的每个语言块使用单独的loader链处理，最后将这些单独的块装配成最终的组件模板
+
+### 知其所以然
+1. vue-loader会调用@vue/compiler-sfc模块解析SFC源码为一个描述符（Descriptor），然后为每个语言块生成import代码，返回的代码类似下面：
+```js
+// source.vue被vue-loader处理之后返回的代码
+
+// import the <template> block
+import render from 'source.vue?vue&type=template'
+// import the <script> block
+import script from 'source.vue?vue&type=script'
+export * from 'source.vue?vue&type=script'
+// import <style> blocks
+import 'source.vue?vue&type=style&index=1'
+
+script.render = render
+export default script
+```
+
+2. 我们想要script块中的内容被作为js处理（当然如果是<script lang="ts">被作为ts处理），这样我们想要webpack把配置中跟.js匹配的规则都应用到形如source.vue?vue&type=script的这个请求上。例如我们对所有*.js配置了babel-loader，这个规则将被克隆并应用到所在Vue SFC的<script>块上。内部的请求比如：
+```js
+import script from 'source.vue?vue&type=script'
+```
+
+将被展开为：
+
+```js
+import script from 'babel-loader!vue-loader!source.vue?vue&type=script'
+```
+
+类似的，如果我们对.sass文件配置了style-loader + css-loader + sass-loader，下面的代码：
+
+```vue
+<style scoped lang="scss"></style>
+```
+
+vue-loader将会返回给我们下面请求：
+
+```js
+import 'source.vue?vue&type=style&index=1&scoped&lang=scss'
+```
+
+然后webpack会展开如下：
+
+```js
+import 'style-loader!css-loader!sass-loader!vue-loader!source.vue?vue&type=style&index=1&scoped&lang=scss'
+```
+
+1. 当处理展开请求时，vue-loader将被再次调用。这次，loader将会关注那些有查询串的请求，且仅针对特定块，它会选中特定块内部的内容并传递给后面匹配的loader。
+2. 对于`<script>`块，处理到这就可以了，但是`<template>` 和 `<style>`还有一些额外任务要做，比如：
+
+- 需要用Vue 模板编译器编译template，从而得到render函数
+- 需要对`<style scoped>`中的CSS做后处理（post-process），该操作在css-loader之后但在style-loader之前
+
+实现上这些附加的loader需要被注入到已经展开的loader链上，最终的请求会像下面这样：
+
+```js
+// <template lang="pug">
+import 'vue-loader/template-loader!pug-loader!source.vue?vue&type=template'
+
+// <style scoped lang="scss">
+import 'style-loader!vue-loader/style-post-loader!css-loader!sass-loader!vue-loader!source.vue?vue&type=style&index=1&scoped&lang=scss'
+```
+
+## 33.你写过自定义指令吗？使用场景有哪些？
+### 思路
+1. 定义
+2. 何时用
+3. 怎么用
+4. 常用指令
+5. vue3变化
+
+### 回答范例
+1. Vue有一组默认指令，比如v-model或v-for，同时Vue也运行用户注册自定义指令来扩展Vue能力
+2. 自定义指令主要完成一些可复用低层级DOM操作
+3. 使用自定义指令分为定义、注册和使用三步：
+   1. 定义自定义指令有两种方式，对象和函数形式，前者类似组件定义，有各种生命周期；后者只会在mounted和updated时执行
+   2. 注册自定义指令类似组件，可以使用app.directive()全局注册，使用{directive: {xxx}}局部注册
+   3. 使用时在注册名称前加上v-即可，比如v-focus
+4. 我在项目中常用到的一些自定义指令，例如：
+   1. 复制粘贴：v-copy
+   2. 长按：v-longpress
+   3. 防抖：v-debounce
+   4. 图片懒加载：v-lazy
+   5. 页面水印：v-waterMarker
+   6. 拖拽指令：v-draggable
+5. vue3中指令发生了较大的变化，主要是钩子的名称保持与组件一致，这样开发人员更容易记忆，不易犯错。另外在v3.2之后，可以在setup中以一个小写v开头方便定义自定义指令，更方便了。
+
+### 知其所以然
+编译后的自定义指令会被withDirective函数装饰，进一步处理生成的vnode，添加到特定属性中。
+[v-focus](https://play.vuejs.org/#eNp9UstKAzEU/ZVrNm1BO4g7GQUVRV2oqOAmmzK9raOZJORRC8OsxJ3oRv0Gl4JQKfg7rd35C97J2NaFFGYx55HknJvkbEvrZs8jW2exTUyqHVh0Xm9ymWZaGQc5GOxAAR2jMqiRtcYll4mS1kFmu7BR6vXaPgqh4EIZ0V6qNeaW3p5KvCVXziVAprx02K6jaFQEQBTB5OFj9PiSSu3d9+f9aDiYvN1+Pb2O7gadcnG9MX4Zjt+fKz+K5i9b4oJL+uKoyk6pCTjMtGg5JAQQX65u5nlIWhRxRCiw4TDorWSqjWKDM9I5Ixy2JksczXZhy8xZKtNJu80rqySNKkTnLFGZTgWaY+1SKsvZ+rQUZy0ax81h4JzxuDzlk0tMrv/hr2y/5Dg7MWjR9JCzmeZapouuknfPjrBP/zORGnhB7gXiKVolfJmxsm172abYf3wh7UG48FR2z+1u36G001Jl0DDs4OeMHsHOgurzuGvNteklseIH2rnXfg==)
 
 ## 34.$attrs和$listeners是做什么的？
+### 思路
+1. 这两个api的作用
+2. 使用场景分析
+3. 使用方式和细节
+4. vue3变化
+
+### 回答范例
+1. 我们可能会有一些属性和事件没有在props中定义，这类称为非属性特性，结合v-bind指令可以直接透传给内部的子组件
+2. 这类“透传属性”常常用于包装高阶组件时往内部传递属性，常用于爷孙组件之间传参。比如我在扩展A组件时创建了组件B,然后在C组件中使用B,此时传递给C的属性中只有props里面声明的属性是给B使用的，其他都是A需要的，此时就可以利用v-bind=$attrs透传下去
+3. 最常见用法是结合v-bind做展开；$attrs本身不是响应式的，除非访问的属性本身是响应式对象
+4. vue2中使用$listeners获取事件，vue3中已移除，均合并到$attrs中，使用起来更简单
+
+### 知其所以然
+查看透传属性foo和普通属性bar，发现vnode结构完全相同，这说明vue3中将分辨两者工作由框架完成而非用户指定：
+```vue
+<template>
+  <h1>{{ msg }}</h1>
+  <comp foo="foo" bar="bar" />
+</template>
+```
+
+```vue
+<template>
+  <div>
+    {{$attrs.foo}} {{bar}}
+  </div>
+</template>
+<script setup>
+defineProps({
+  bar: String
+})
+</script>
+```
+
+```js
+_createVNode(Comp, {
+    foo: "foo",
+    bar: "bar"
+})
+```
+
+[代码](https://play.vuejs.org/#eNp9UlFLwzAQ/isxCFUYLbK30Q1UBuqDDif4kpfaXrvONgnJdQ5K/ruX1NUi6kvI3ffdd99d0vNrreNDB3zBU5ubWiOzgJ1eCVm3WhlkPTNQMsdKo1oWETUaoVvV6q98nPjAKxGcK2mRtbZiS198Ed1B0yj2qkxTnEWXQqbJ0Iu6UIDQ6iZDoIixdHe16vtQ7FyaUBSyeWil1FJwOgVnb5mhO510T4iTJqMMn/GTGT/WRF5gWtSHoMhY359niMbGJOgchSTmXOiWDKyJJgU/1lNAWUvYGKXtRe+rqHzBtmhqWQnpplOSIbS0lLKu4r1VklyFCsH9WHUD5kljTUsTfMEC4rGMdvbxEHJoOpid8vkO8vdf8nt79DnBNwYsmAMIPmKYmQpwgNfbRzjSfQRbVXQNsf8Bn8GqpvMeB9pNJwuyPeEFt/fhX9ACXuz6iCDtaShv1DNd4AtOT+Of6K/Rv+3O43moo41y9wkUxOX9)
 
 ## 35.v-once使用场景有哪些？
+### 思路
+1. v-once是什么
+2. 什么时候使用
+3. 如何使用
+4. 扩展v-memo
+5. 探索原理
+
+### 回答范例
+1. v-once是vue的内置指令，作用是仅渲染指定组件或元素一次，并跳过未来对其更新
+2. 如果我们有一些元素或组件在初始化渲染之后不再需要变化，这种情况下适合使用v-once，这样哪怕数据变化，vue也会跳过更新，是一种代码优化手段
+3. 我们只需要作用的组件或元素上加上v-once即可
+4. vue3.2之后，又增加了v-memo指令，可以有条件缓存部分模板并控制它们的更新，可以说控制力更强了
+5. 编译器发现元素上面有v-once时，会将首次计算结果存入缓存对象，组件再次渲染时就会从缓存获取，从而避免再次计算
+
+### 知其所以然
+下面例子使用了v-once
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const msg = ref('Hello World!')
+</script>
+
+<template>
+  <h1 v-once>{{ msg }}</h1>
+  <input v-model="msg">
+</template>
+```
+
+我们发现v-once出现后，编译器会缓存作用元素或组件，从而避免以后更新时重新计算这一部分
+
+```js
+// ...
+return (_ctx, _cache) => {
+  return (_openBlock(), _createElementBlock(_Fragment, null, [
+    // 从缓存获取vnode
+    _cache[0] || (
+      _setBlockTracking(-1),
+      _cache[0] = _createElementVNode("h1", null, [
+        _createTextVNode(_toDisplayString(msg.value), 1 /* TEXT */)
+      ]),
+      _setBlockTracking(1),
+      _cache[0]
+    ),
+// ...
+```
 
 ## 36.什么是递归组件？使用场景有哪些？
+### 分析
+递归组件在tree、menu这类组件中会被用的
+
+### 体验
+组件通过组件名称引用它自己，这种情况就是递归组件
+> An SFC can implicitly refer to itself via its filename.
+```vue
+<template>
+  <li>
+    <div> {{ model.name }}</div>
+    <ul v-show="isOpen" v-if="isFolder">
+      <!-- 注意这里：组件递归渲染了它自己 -->
+      <TreeItem
+        class="item"
+        v-for="model in model.children"
+        :model="model">
+      </TreeItem>
+    </ul>
+  </li>
+<script>
+export default {
+  name: 'TreeItem',
+  // ...
+}
+</script>
+```
+
+### 思路
+1. 下定义
+2. 使用场景
+3. 使用细节
+4. 原理阐述
+
+### 回答范例
+1. 如果某个组件通过组件名称引用它自己，这种情况就是递归组件
+2. 实际开发中类似Tree、Menu这类组件，它们的节点往往包含子节点，子节点结构和父节点往往是相同的。这类组件的数据往往也是树形结构，这种都是使用递归组件的典型场景
+3. 使用递归组件时，由于我们并未也不能在组件内部导入它自己，所以设置组件name属性，用来查找组件定义，如果使用SFC,则可以通过SFC文件名推断。组件内部通常也要有递归结束条件，比如model.children这样的判断
+4. 查看生成渲染函数可知，递归组件查找时会传递一个布尔值给resolveComponent，这样实际获取的组件就是当前组件本身
+
+### 知其所以然
+递归组件编译结果中，获取组件时会传递一个标识符 `_resolveComponent("Comp", true)`
+
+```js
+const _component_Comp = _resolveComponent("Comp", true)
+```
+
+就是在传递`maybeSelfReference`
+
+```js
+export function resolveComponent(
+  name: string,
+  maybeSelfReference?: boolean
+): ConcreteComponent | string {
+  return resolveAsset(COMPONENTS, name, true, maybeSelfReference) || name
+}
+```
+
+resolveAsset中最终返回的是组件自身：
+
+```js
+if (!res && maybeSelfReference) {
+    // fallback to implicit self-reference
+    return Component
+}
+```
+
+[resolveAssets](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/helpers/resolveAssets.ts#L22-L23)
+[playground](https://play.vuejs.org/#eNp9U81u1DAQfpWRL2mlNlG3tyhdCVAPcKAIuGEOaTK7m8WxI9tZVooiceAJ+jBcKt4GhHgLxpOf3RXQkzPzff78zWenE8+aJt61KFKRucJWjQeHvm2WUld1Y6yHDiyuoIeVNTVERI1mqDB1M/bj5AUVQYngwmjnoXZruAmbz6LfXx5+fn/49fj1x+O36HwmmBIVUTqpAVR+jyqFSFPz8iq6CL1iU6nSok7hQygBulMW8Xom/o0soj4AH6WmNUuG0WgoKjzWjco9UgWQba6WXcde+z5LqOIuT5aywRspeJVimSWhT4wsmUXEhZgmDxmeipfVjj/IX8ciMdvs2VuWTHAWFGB3uTKWTqtIAyo9xBNPGUhx8BMYbCfsOxhejAYXpw6pOIzvcc9XV+IqbxXd7mBP5zVSeEFviB6gsaZx6USAwU4Kd/dbLPzQnMIPhxqN2h/z2clRDfQUdIn27Lzj8Vlg1AnL8T1RqN7RI1lV63jrjKZkWUeKoFoptHeNr+gRSTGfIEWulPn8invetjiaoz0bLD79o791+9CT4o1Fh3aHUsyYz+0a/QDfvnuNe/qeQYqiVcR+AnyLzqg2eBxoz1tdku0jHrt9yT9Spdfv3e3eo3bTUMEop8J8Keh5hcv53+gHu9fx9ZhmL/o/+vFGeg==)
 
 ## 37.什么是异步组件？
+### 体验
+大小应用中，我们需要分割应用为更小的块，并且再需要组件时再加载它们
+
+```js
+import { defineAsyncComponent } from 'vue'
+// defineAsyncComponent定义异步组件
+const AsyncComp = defineAsyncComponent(() => {
+  // 加载函数返回Promise
+  return new Promise((resolve, reject) => {
+    // ...可以从服务器加载组件
+    resolve(/* loaded component */)
+  })
+})
+// 借助打包工具实现ES模块动态导入
+const AsyncComp = defineAsyncComponent(() =>
+  import('./components/MyComponent.vue')
+)
+```
+
+### 思路
+1. 异步组件作用
+2. 什么时候使用异步组件
+3. 使用细节
+4. 和路由懒加载的不同
+
+### 回答范例
+1. 在大型应用中，我们需要分割应用为更小的块，并且在需要组件时再加载它们
+2. 我们不仅可以在路由切换时懒加载组件，还可以再页面组件中继续使用异步组件，从而实现更细的分割粒度
+3. 使用异步组件最简单的方式是直接给defineAsyncComponent指定一个loader函数，结合ES模块动态导入函数import可以快速实现。我们甚至可以指定loadingComponent和errorComponent选项从而给用户一个很好的加载反馈。另外Vue3中还可以结合suspense组件使用异步组件
+4. 异步组件容易和路由懒加载混淆，实际上不是一个东西。异步组件不能被用于定义懒加载路由上，处理它的是vue框架，处理路由组件加载的是vue-router。但是可以在懒加载的路由组件中使用异步组件
+
+### 知其所以然
+defineAsyncComponent定义了一个高阶组件，返回一个包装组件。包装组件根据加载器的状态决定渲染什么内容。
+
+[defineAsyncComponent](https://github1s.com/vuejs/core/blob/HEAD/packages/runtime-core/src/apiAsyncComponent.ts#L43-L44)
 
 ## 38.Vue项目中如何处理错误？
+### 思路
+1. 首先区分错误类型
+2. 根据错误不同类型做相应收集
+3. 收集的错误是如何上报服务器的
+
+### 回答范例
+1. 应用中的错误类型分为接口异常和代码逻辑异常
+2. 我们需要根据不同错误类型做相应处理：接口异常是我们请求后端接口过程中发生的异常，可能是请求失败，也可能是请求获得了服务器响应，但是返回的是错误状态。以Axios为例，这类异常我们可以通过封装Axios，在拦截器中统一处理整个应用中请求的错误。代码逻辑异常是我们编写的前端代码中存在逻辑上的错误造成的异常，vue应用中最常见的方式是使用全局错误处理函数app.config.errorHandler收集错误。
+3. 收集到错误之后，需要统一处理这些异常：分析错误，获取需要错误信息和数据。这里应该有效区分错误类型，如果是请求错误，需要上报接口信息，参数，状态码等；对于前端逻辑异常，获取错误名称和详情即可。另外还可以收集应用名称、环境、版本、用户信息，所在页面等。这些信息可以通过vuex存储的全局状态和路由信息获取。
+
+### 实践
++ axios拦截器中处理捕获异常：
+```js
+// 响应拦截器
+instance.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    // 存在response说明服务器有响应
+    if (error.response) {
+      let response = error.response;
+      if (response.status >= 400) {
+        handleError(response);
+      }
+    } else {
+      handleError(null);
+    }
+    return Promise.reject(error);
+  },
+);
+```
+
++ vue中全局捕获异常：
+```js
+import { createApp } from 'vue'
+
+const app = createApp(...)
+
+app.config.errorHandler = (err, instance, info) => {
+  // report error to tracking services
+}
+```
+
++ 处理接口请求错误：
+```js
+function handleError(error, type) {
+  if(type == 1) {
+    // 接口错误，从config字段中获取请求信息
+    let { url, method, params, data } = error.config
+    let err_data = {
+       url, method,
+       params: { query: params, body: data },
+       error: error.data?.message || JSON.stringify(error.data),
+    })
+  }
+}
+```
+
++ 处理前端逻辑错误：
+```js
+function handleError(error, type) {
+  if(type == 2) {
+    let errData = null
+    // 逻辑错误
+    if(error instanceof Error) {
+      let { name, message } = error
+      errData = {
+        type: name,
+        error: message
+      }
+    } else {
+      errData = {
+        type: 'other',
+        error: JSON.strigify(error)
+      }
+    }
+  }
+}
+```
 
 ## 39.从0实现vuex?
+### 思路
+1. vuex需求分析
+2. 如何实现这些需求
+
+### 回答范例
+1. 官方说vuex是一个状态管理模式的库，并确保这种状态以可预期的方式变更。可见要实现一个vuex:
+   1. 要实现一个store存储全局状态
+   2. 要提供修改状态所需API: commit(type, payload), dispatch(type, payload)
+2. 实现store时，可以定义Store类，构造函数接收选项options,设置属性state对外暴露状态，提供commit和dispatch修改属性state。这里需要设置state为响应式对象，同时将Store定义为一个vue插件
+3. commit(type, payload)方法中可以获取用户传入的mutations并执行它，这样可以按用户提供的方法修改状态。dispatch(type, payload)类似，但需要注意它可能是异步的，需要返回一个Promise给用户以处理异步结果。
+
+### 实践
+Store的实现
+```js
+class Store {
+    constructor(options) {
+        this.state = reactive(options.state)
+        this.options = options
+    }
+    commit(type, payload) {
+        this.options.mutations[type].call(this, this.state, payload)
+    }
+}
+```
+
+### 知其所以然
+[Vuex中Store的实现](https://github1s.com/vuejs/vuex/blob/HEAD/src/store.js#L19-L20)
 
 ## 40.mutation和action有什么区别？
+### 体验
+看下面例子可知，Action 类似于 mutation，不同在于：
++ Action 提交的是 mutation，而不是直接变更状态。
++ Action 可以包含任意异步操作。
+```js
+const store = createStore({
+  state: {
+    count: 0
+  },
+  mutations: {
+    increment (state) {
+      state.count++
+    }
+  },
+  actions: {
+    increment (context) {
+      context.commit('increment')
+    }
+  }
+})
+```
+
+### 思路
+1. 给出两者概念说明区别
+2. 举例说明应用场景
+3. 使用细节不同
+4. 简单阐述实现上差异
+
+### 回答范例
+1. 官方文档说：更改 Vuex 的 store 中的状态的唯一方法是提交 mutation，mutation 非常类似于事件：每个 mutation 都有一个**字符串的类型 (type)**和一个**回调函数 (handler)**。Action 类似于 mutation，不同在于：Action可以包含任意异步操作，但它不能修改状态， 需要提交mutation才能变更状态。
+2. 因此，开发时，包含异步操作或者复杂业务组合时使用action；需要直接修改状态则提交mutation。但由于dispatch和commit是两个API，容易引起混淆，实践中也会采用统一使用dispatch action的方式。
+3. 调用dispatch和commit两个API时几乎完全一样，但是定义两者时却不甚相同，mutation的回调函数接收参数是state对象。action则是与Store实例具有相同方法和属性的上下文context对象，因此一般会解构它为{commit, dispatch, state}，从而方便编码。另外dispatch会返回Promise实例便于处理内部异步结果。
+4. 实现上commit(type)方法相当于调用`options.mutations[type](state)`；dispatch(type)方法相当于调用`options.actions[type](store)`，这样就很容易理解两者使用上的不同了。
+
+### 知其所以然
+我们可以像下面这样简单实现commit和dispatch，从而辨别两者不同：
+```js
+class Store {
+    constructor(options) {
+        this.state = reactive(options.state)
+        this.options = options
+    }
+    commit(type, payload) {
+        // 传入上下文和参数1都是state对象
+        this.options.mutations[type].call(this.state, this.state, payload)
+    }
+    dispatch(type, payload) {
+        // 传入上下文和参数1都是store本身
+        this.options.actions[type].call(this, this, payload)
+    }
+}
+```
 
 ## 41.Vue长列表优化思路
+### 思路
+1. 描述大数据量带来的问题
+2. 分不同情况做不同处理
+3. 总结一下
+
+### 回答范例
+1. 在大型企业级项目中经常需要渲染大量数据，此时很容易发生卡顿的情况。比如大数据量的表格、树等
+2. 处理时需要根据情况做不同处理：
+   1. 可以采用分页的方式获取，避免渲染大量数据
+   2. 虚拟滚动方案，只渲染视口范围内的数据
+   3. 如果不需要更新，可以使用v-once方式只渲染一次
+   4. 通过v-memo可以缓存结果，结合v-for使用，避免数据变化时不必要的VNode创建
+   5. 可以采用懒加载方式，在用户需要的时候再加载数据，比如tree组件子树的懒加载
+3. 总之，还是要看具体需求，首先从设计上避免大数据获取和渲染；实在需要这样做可以采用虚拟列表的方式优化渲染；最后优化更新，如果不需要更新可以v-once处理，需要更新可以v-memo进一步优化大数据更新性能。其他可以采用的是交互方式优化，无限滚动，懒加载等方案
 
 ## 42.如何监听vuex状态变化
+### 分析
+vuex数据状态是响应式的，所以状态变视图跟着变，但是有时还需要指导数据状态变了从而做一些事情
+
+既然状态都是响应式的，那自然可以watch，另外vuex也提供了订阅API:store.subscribe()
+
+### 思路
+1. 总述知道的办法
+2. 分别阐述用法
+3. 选择和场景
+
+### 回答范例
+1. 我知道几种方法：
+   1. 可以通过watch选项或者watch方法监听状态
+   2. 可以使用vuex提供的API：store.subscribe()
+2. watch选项方式，可以以字符串形式监听$store.state.xx;subscribe方式，可以调用store.subscribe(cb)，回调函数接收mutation对象和state对象，这样可以进一步判断mutation.type是否是期待的那个，从而进一步做后续处理
+3. watch方式简单好用，且能获取变化前后的值，首选；subscribe方法会被所有commit行为触发，隐藏还需要判断mutation.type，用起来略繁琐，一般用于vuex插件中
+
+### 实践
++ watch方式
+```js
+const app = createApp({
+    watch: {
+      '$store.state.counter'() {
+        console.log('counter change!');
+      }
+    }
+  })
+```
++ subscribe方式
+```js
+  store.subscribe((mutation, state) => {
+    if (mutation.type === 'add') {
+      console.log('counter change in subscribe()!');
+    }
+  })
+```
 
 ## 43.router-link和router-view是如何生效的？
+### 思路
+1. 两者作用
+2. 阐述使用方式
+3. 原理说明
+
+### 回答范例
+1. vue-router中两个重要组件router-link和router-view，分别起到路由导航作用和组件内容渲染作用
+2. 使用router-link默认生成一个a标签，设置to属性定义跳转path。实际上也可以通过custom和插槽自定义最终的展现形式。router-view是要显示组件的占位组件，可以嵌套，对应路由配置的嵌套关系，配合name可以显示具名组件，起到更强的布局作用
+3. router-link组件内部根据custom属性判断如何渲染最终生成节点，内部提供导航方法navigate，用户点击之后实际调用的是该方法，此方法最终会修改响应式的路由变量，然后重新去routes匹配出数组结果，router-view则根据其所处深度deep在匹配数组结果中找到对应的路由并获取组件，最终将其渲染出来
+
+### 知其所以然
++ [routerLink](https://github1s.com/vuejs/router/blob/HEAD/src/RouterLink.ts#L184-L185)
++ [routerView](https://github1s.com/vuejs/router/blob/HEAD/src/RouterView.ts#L43-L44)
 
 ## 44.Vue3性能提升体现在哪些方面？
 

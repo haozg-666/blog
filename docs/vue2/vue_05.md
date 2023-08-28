@@ -1716,23 +1716,122 @@ const app = createApp({
 ## 43.router-link和router-view是如何生效的？
 ### 思路
 1. 两者作用
-2. 阐述使用方式
-3. 原理说明
+2. 阐述整体流程
+3. 分析两个组件实现方式
 
 ### 回答范例
-1. vue-router中两个重要组件router-link和router-view，分别起到路由导航作用和组件内容渲染作用
-2. 使用router-link默认生成一个a标签，设置to属性定义跳转path。实际上也可以通过custom和插槽自定义最终的展现形式。router-view是要显示组件的占位组件，可以嵌套，对应路由配置的嵌套关系，配合name可以显示具名组件，起到更强的布局作用
-3. router-link组件内部根据custom属性判断如何渲染最终生成节点，内部提供导航方法navigate，用户点击之后实际调用的是该方法，此方法最终会修改响应式的路由变量，然后重新去routes匹配出数组结果，router-view则根据其所处深度deep在匹配数组结果中找到对应的路由并获取组件，最终将其渲染出来
+1. vue-router中两个重要组件router-link和router-view，分别起到**路由导航作用**和**组件内容渲染作用**
+2. vue-router会监听popstate事件，点击router-link后之后页面不会刷新，而是拿出当前path去和routes中path匹配，获得匹配组件后，router-view会将匹配组件渲染出来
+3. 使用router-link默认生成一个a标签，点击后取消默认行为而是执行一个navigate方法，它会pushState以激活事件处理函数，重新匹配出一个路由injectedRoute；router-view的渲染函数依赖这个路由，它根据该路由获取要渲染的组件并重新渲染它
+4. router-link组件内部根据custom属性判断如何渲染最终生成节点，内部提供导航方法navigate，用户点击之后实际调用的是该方法，此方法最终会修改响应式的路由变量，然后重新去routes匹配出数组结果，router-view则根据其所处深度deep在匹配数组结果中找到对应的路由并获取组件，最终将其渲染出来
 
 ### 知其所以然
 + [routerLink](https://github1s.com/vuejs/router/blob/HEAD/src/RouterLink.ts#L184-L185)
 + [routerView](https://github1s.com/vuejs/router/blob/HEAD/src/RouterView.ts#L43-L44)
 
 ## 44.Vue3性能提升体现在哪些方面？
+### 分析
+vue3在设计时有几个目标：更小、更快、更友好，这些改进多数与性能相关，因此可以围绕介绍
+
+### 思路
+1. 总述和性能相关的新特性
+2. 逐个说细节
+3. 能说点原理更佳
+
+### 回答范例
+1. 分别从代码、编译、打包三个方面介绍vue3的性能提升
+2. 代码层面性能优化主要体现在全新响应式API，基于Proxy实现，初始化时间和内存占用均大幅改进
+3. 编译层面做了更多编译优化处理，比如静态提升、动态内容标记、事件缓存、区块等，可以有效跳过大量diff过程
+4. 打包时更好的tree-shaking，因此整体提交更小，加载更快
+
+### 知其所以然
+1. 为什么基于Proxy更快了：初始化时懒出来，用户访问才做拦截处理，初始化更快[源代码](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/baseHandlers.ts#L148-L153)
+2. 轻量的依赖关系保存：利用weakMap、Map和Set保存响应式数据和副作用之间的依赖关系[源代码](https://github1s.com/vuejs/core/blob/HEAD/packages/reactivity/src/effect.ts#L18-L19)
 
 ## 45.Vue3为什么用proxy代替defineProperty?
+### 分析
+vue3中最重大的更新之一就是响应式模块`reactivity`的重写。主要的修改就是`Proxy`替换`defineProperty`实现响应式。此变化主要是从性能方面考量。
+
+### 思路
+1. 属性拦截的几种方式
+2. defineProperty的问题
+3. Proxy的优点
+4. 其他考量
+
+### 回答范例
+1. JS中做属性拦截常见的方式有三种：defineProperty、getter/setters、proxies
+2. Vue2中使用`defineProperty`的原因是，2013年只能使用这种方式。由于该API的局限性，比如对于数组的拦截有问题，为此vue需要专门为数组响应式做一套实现。另外不能拦截那些新增、删除属性；最后`definePr0perty`方案在初始化时需要深度递归遍历待处理的对象才能对他进行完全拦截，明显增加了初始化的时间；通知更新过程需要维护大量dep实例和watcher实例，额外占用内存较多
+3. 以上两点在Proxy出现后，迎刃而解，不仅可以对数组实现拦截，还能对Map、Set实现拦截；另外Proxy的拦截也是懒处理行为，如果用户没有访问嵌套对象，那么也不会实施拦截，这就让初始化的速度和内存占用都改善了
+4. 当然Proxy是有兼容性问题的，IE完全不支持，所以如果需要兼容IE就不合适
+
+### 知其所以然
++ Proxy属性拦截的原理：利用get、set、deleteProperty这三个trap实现拦截
+```js
+function reactive(obj) {
+  return new Proxy(obj, {
+    get(traget, key) {},
+    set(traget, key) {},
+    deletePropterty(target, key) {}
+  })
+}
+```
++ Object.defineProperty属性拦截原理：利用get、set这两个trap实现拦截
+```js
+function defineReactive(obj, key, val) {
+  Object.defineProperty(obj, key, {
+    get(key) {},
+    set(key, val) {}
+  })
+}
+```
 
 ## 46.history和hash模式有何区别？
+差别主要在现实形式和部署上。
+### 体验
+vue-router4.x中设置模式已经变化：
+```ts
+const router = createRouter({
+  history: createWebHashHistory(), // hash模式
+  history: createWebHistory(), // history模式
+  history: createMemoryHistory(), // memory模式
+})
+```
+
+用起来一模一样
+
+```vue
+<router-link to="/abort">go to abort</router-link>
+```
+
+区别只在url形式
+```
+hash: `http://xx.com/#/abort`
+history: `http://xx.com/abort`
+```
+
+### 思路
+1. 总述两者区别
+2. 详细阐述使用细节
+3. 实现方式
+
+### 回答范例
+1. vue-router有3个模式，其中history和hash更为常用。两者区别主要在显示形式和部署上
+2. hash模式在地址栏显示的时候是以哈希的形式：#/xxx，这种方式使用和部署上都比较简单；history模式url看起来更优雅美观，但是应用在部署时需要做特殊配置，web服务器需要做回退处理，否则会出现刷新页面404的问题
+3. 在实现上不管哪种模式，最终都是通过监听popstate事件触发路由跳转处理，url显示不同只是显示效果上的差异
+
+### history nginx配置
+```
+server {
+  listen  80;
+  server_name xxx.com;
+  
+  location /admin {
+    root /User/adc/www/admin
+    index index.html
+    try_files $uri $uri/ /admin/index.html 
+  }
+}
+```
 
 ## 47.什么场景使用嵌套路由？
 

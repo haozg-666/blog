@@ -1200,7 +1200,7 @@ SPA
 
 ### 回答范例
 1. vue-loader是用于处理单文件组件(SFC,Single-File Component)的webpack loader
-2. 因为用了vue-loader，我们就可以在项目中编写SFC格式的Vue组件，我们可以把代码分割为 <script>和<style>，代码会异常清晰。结合其他loader我们还可以用Pug编写，用sass、less编写<style>，用TS编写<script>
+2. 因为用了vue-loader，我们就可以在项目中编写SFC格式的Vue组件，我们可以把代码分割为`<script>`和`<style>`，代码会异常清晰。结合其他loader我们还可以用Pug编写，用sass、less编写`<style>`，用TS编写`<script>`
 3. webpack打包时，会以loader的方式调用vue-loader
 4. vue-loader被执行时，它会对SFC中的每个语言块使用单独的loader链处理，最后将这些单独的块装配成最终的组件模板
 
@@ -1221,7 +1221,7 @@ script.render = render
 export default script
 ```
 
-2. 我们想要script块中的内容被作为js处理（当然如果是<script lang="ts">被作为ts处理），这样我们想要webpack把配置中跟.js匹配的规则都应用到形如source.vue?vue&type=script的这个请求上。例如我们对所有*.js配置了babel-loader，这个规则将被克隆并应用到所在Vue SFC的<script>块上。内部的请求比如：
+2. 我们想要script块中的内容被作为js处理（当然如果是`<script lang="ts">`被作为ts处理），这样我们想要webpack把配置中跟.js匹配的规则都应用到形如`source.vue?vue&type=script`的这个请求上。例如我们对所有*.js配置了`babel-loader`，这个规则将被克隆并应用到所在Vue SFC的`<script>`块上。内部的请求比如：
 ```js
 import script from 'source.vue?vue&type=script'
 ```
@@ -1816,7 +1816,7 @@ history: `http://xx.com/abort`
 
 ### 回答范例
 1. vue-router有3个模式，其中history和hash更为常用。两者区别主要在显示形式和部署上
-2. hash模式在地址栏显示的时候是以哈希的形式：#/xxx，这种方式使用和部署上都比较简单；history模式url看起来更优雅美观，但是应用在部署时需要做特殊配置，web服务器需要做回退处理，否则会出现刷新页面404的问题
+2. hash模式在地址栏显示的时候是以哈希的形式：#/xxx，这种方式使用和部署上都比较简单（不利于SEO）；history模式url看起来更优雅美观，但是应用在部署时需要做特殊配置，web服务器需要做回退处理，否则会出现刷新页面404的问题
 3. 在实现上不管哪种模式，最终都是通过监听popstate事件触发路由跳转处理，url显示不同只是显示效果上的差异
 
 ### history nginx配置

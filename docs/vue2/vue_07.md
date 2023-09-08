@@ -7,14 +7,13 @@ description: 【07】项目最佳实践
 # 目标
 + 项目配置
 + 权限管理
-+ 导航菜单
 + 数据mock
 + 测试
  
 # 知识点
 
 ## 项目配置
-基础配置：指定应用上下文，端口，vue.config.js
+### 基础配置：指定应用上下文，端口，vue.config.js
 
 ```js
 const port = 7070;
@@ -25,6 +24,186 @@ module.exports = {
  }
 };
 ```
+
+配置webpack：`configureWebpack`
+
+范例设置一个组件存放路径的别名：vue.config.js
+
+```js
+const path=require('path')
+module.exports = {
+ configureWebpack: {
+   resolve: {
+     alias: {
+      comps: path.join(__dirname, 'src/components'),
+     }
+   }
+ }
+}
+```
+
+范例：设置一个webpack配置项用于页面title，vue.config.js
+
+```js
+module.exports = {
+ configureWebpack: {
+  name: "vue项⽬最佳实践"
+ }
+};
+```
+
+在宿主页面使用loadsh插值语法使用它，`./public/index.html`
+```html
+<title><%= webpackConfig.name %></title>
+```
+
+范例：基于环境有条件地配置，vue.config.js
+```js
+// 传递⼀个函数给configureWebpack
+// 可以直接修改，或返回⼀个⽤于合并的配置对象
+configureWebpack: config => {
+  config.resolve.alias.comps = path.join(__dirname, 'src/components')
+  if (process.env.NODE_ENV === 'development') {
+    config.name = 'vue项⽬最佳实践'
+  } else {
+    config.name = 'Vue Best Practice'
+  }
+}
+```
+
+配置webpack: `chainWebpack`
+
+webpack-chain称为链式操作，可以更细粒度控制webpack内部配置。
+
+范例：svg-icon引入
++ 下载图标，存入src/icons/svg中
++ 安装依赖：svg-sprite-loader, `npm i svg-sprite-loader -D`
++ 修改规则和新增规则，vue.config.js
+```js
+// resolve定义⼀个绝对路径获取函数
+const path = require('path')
+function resolve(dir) {
+ return path.join(__dirname, dir)
+}
+//...
+chainWebpack(config) {
+ // 配置svg规则排除icons⽬录中svg⽂件处理
+ // ⽬标给svg规则增加⼀个排除选项exclude:['path/to/icon']
+ config.module.rule("svg")
+ .exclude.add(resolve("src/icons"))
+ 
+ // 新增icons规则，设置svg-sprite-loader处理icons⽬录中的svg
+ config.module.rule('icons')
+ .test(/\.svg$/)
+ .include.add(resolve('./src/icons')).end()
+ .use('svg-sprite-loader')
+ .loader('svg-sprite-loader')
+ .options({symbolId: 'icon-[name]'})
+}
+```
+
++ 使用图标，App.vue
+```vue
+<template>
+ <svg>
+ <use xlink:href="#icon-wx" />
+ </svg>
+</template>
+<script>
+ import '@/icons/svg/wx.svg'
+</script>
+```
+
++ 自动导入
+
+创建icons.index.js
+```js
+  const req = require.context('./svg', false, /\.svg$/)
+  req.keys().map(req);
+```
+  
+创建SvgIcon组件，components/SvgIcon.vue
+```vue
+<template>
+ <svg :class="svgClass" v-on="$listeners">
+  <use :xlink:href="iconName" />
+ </svg>
+</template>
+<script>
+export default {
+ name: 'SvgIcon',
+ props: {
+   iconClass: {
+     type: String,
+     required: true
+   },
+   className: {
+     type: String,
+     default: ''
+   }
+ },
+ computed: {
+   iconName() {
+      return `#icon-${this.iconClass}`
+   },
+   svgClass() {
+     if (this.className) {
+      return 'svg-icon ' + this.className
+     } else {
+      return 'svg-icon'
+     }
+   }
+ }
+}
+</script>
+<style scoped>
+.svg-icon {
+ width: 1em;
+ height: 1em;
+ vertical-align: -0.15em;
+ fill: currentColor;
+ overflow: hidden;
+}
+</style>
+```
+
+### 环境变量和模式
+如果想给多种环境做不同配置，可以利⽤vue-cli提供的模式。默认`development`、`production`、`test` 三种模式，对应的，它们的配置⽂件形式是 .env.development 。
+
+范例：定义⼀个开发时可⽤的配置项，创建.env.dev
+
+```env
+# 只能⽤于服务端
+foo=bar
+# 可⽤于客户端
+VUE_APP_DONG=dong
+```
+
+修改mode选项覆盖模式名称，package.json
+```json
+{
+  "serve": "vue-cli-service serve --mode dev"
+}
+```
+
+## 权限控制
+
+### 路由定义
+路由分为两种：
++ constantRoutes ：通⽤路由可直接访问
++ asyncRoutes ：权限路由，需要先登录，获取⻆⾊后才能判断是否可以访问
+
+### 路由守卫
+默认路由守卫规则：
++ 已登录访问登录⻚：跳转⾸⻚
++ 已登录访问其他⻚：
+  + 已获取⻆⾊：放⾏
+  + 未获取⻆⾊：请求⻆⾊ =》过滤可访问路由 =》动态增加到router
++ 未登录访问⽩名单⻚⾯：放⾏
++ 未登录访问其他⻚：跳转⾄登录⻚
+
+
+
 
 ## 数据mock
 数据模拟两种常见方式，本地mock和线上mock

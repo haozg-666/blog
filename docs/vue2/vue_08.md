@@ -238,6 +238,76 @@ getResult(1)
 配置一个模拟接口，vue.config.js
 
 ```js
- 
-``` 
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
+  transpileDependencies: true,
+  lintOnSave: false,
+  devServer: {
+    onBeforeSetupMiddleware(devServer) {
+      devServer.app.get("/api/list", (req, res) => {
+        res.json([
+          { id: 1, name: "类型注解", selected: true },
+          { id: 2, name: "编译型语言", selected: false },
+        ]);
+      });
+    },
+  },
+})
+```
+
+vue中使用
+
+```vue
+<script lang="ts">
+import {Component, Vue} from 'vue-property-decorator';
+import Axios from 'axios';
+// 类型别名
+type Feature = {
+  id: number;
+  name: string;
+}
+// 交叉类型
+type FeatureSelect = Feature & {selected: boolean}
+
+interface Result<T> {
+  ok: number;
+  data: T;
+}
+
+@Component
+export default class HelloWorld extends Vue {
+  created() {
+    Axios.get<FeatureSelect[]>('/api/list').then(res => {
+      this.features = res.data;
+    })
+  }
+}
+</script>
+```
+
+## 声明文件
+使用ts开发时，如果要使用第三方js库的同时还想利用ts诸如类型检查等特性就需要声明文件，类似xx.d.ts
+
+同时，vue项目中还可以在shims-vue.d.ts中对已存在模块进行补充
+
+*npm i @types/xxx*
+
+范例：利用模块补充$axios属性到vue实例，从而在组件里面直接用
+
+```ts
+// main.ts
+import axios from 'axios';
+Vue.property.$axios = axios;
+```
+```ts
+// shime-vue.d.ts
+import Vue from 'vue';
+import {AxiosInstanse} from 'axios';
+
+declare module 'vue/types/vue' {
+  interface vue {
+    $axios: AxiosInstanse;
+  }
+}
+```
 

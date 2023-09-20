@@ -66,16 +66,16 @@ export default defineUserConfig({
         text: "其他",
         children: [
           {
-            text: "掘金",
-            link: "https://juejin.cn/user/1204720474797272"
+            text: "Github",
+            link: "https://github.com/haozg-666"
           },
           {
             text: "力扣",
             link: "https://leetcode.cn/u/haozg6"
           },
           {
-            text: "Github",
-            link: "https://github.com/haozg-666"
+            text: "掘金",
+            link: "https://juejin.cn/user/1204720474797272"
           }
         ]
       },
@@ -116,6 +116,7 @@ export default defineUserConfig({
             '/vue2/vue_06.md',
             '/vue2/vue_07.md',
             '/vue2/vue_08.md',
+            '/vue2/vue_09.md',
           ],
         }
       ]

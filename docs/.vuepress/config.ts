@@ -11,6 +11,7 @@ import { registerComponentsPlugin } from '@vuepress/plugin-register-components';
 import { usePagesPlugin } from 'vuepress-plugin-use-pages';
 import { activeHeaderLinksPlugin } from '@vuepress/plugin-active-header-links';
 import { photoSwipePlugin } from "vuepress-plugin-photo-swipe";
+import { mdEnhancePlugin } from 'vuepress-plugin-md-enhance';
 
 const __dirname = getDirname(import.meta.url)
 
@@ -186,6 +187,11 @@ export default defineUserConfig({
     }),
     photoSwipePlugin({
       // 你的选项
+    }),
+    mdEnhancePlugin({
+      // 你的选项
+      // 启用 mermaid
+      mermaid: true,
     }),
   ],
 })

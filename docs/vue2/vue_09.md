@@ -81,3 +81,36 @@ server.listen(80, () => {
 ```
 
 ## 事件激活
+
+
+# 知识点
+
+## 理解ssr
+
+### 传统web开发
+传统web开发，网页内容在服务端渲染完成，一次性传输到浏览器
+
+### 单页应用 Single Page App
+单页应用优秀的用户体验，使其逐渐成为主流，页面内容由js渲染出来，这种方式成为客户端渲染。
+
+```sequence
+客户端->服务器: 访问url请求
+```
+
+```sequence Greetings
+Alice ->> Bob: Hello Bob, how are you?
+Bob-->>John: How about you John?
+Bob--x Alice: I am good thanks!
+Bob-x John: I am good thanks!
+Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.
+
+Bob-->Alice: Checking with John...
+Alice->John: Yes... John, how are you?
+```
+
+ 
+
+
+
+
+

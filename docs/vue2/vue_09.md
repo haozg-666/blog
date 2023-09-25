@@ -7,9 +7,21 @@ description: 【09】ssr-express
 # 概念
 服务端渲染：将vue实例渲染为HTML字符串直接返回，在前端激活为交互程序
 
-# 优点
+## 优点
 + seo
 + 首屏内容到达时间
+
+## 缺点
++ 复杂度
++ 服务端性能
+  + 缓存
+  + 降级 监控cpu内存
+  + 静态化
+
+## 场景
++ seo: 不一定需要ssr, 比如pre-render
++ 服务器检测爬虫 -> puppeteer -> spa
++ nuxt.js
 
 # 服务端知识 express
 ```shell
@@ -80,14 +92,9 @@ server.listen(80, () => {
 });
 ```
 
-## 事件激活
+# 理解ssr
 
-
-# 知识点
-
-## 理解ssr
-
-### 传统web开发
+## 传统web开发
 传统web开发，网页内容在服务端渲染完成，一次性传输到浏览器
 
 ```sequence
@@ -97,7 +104,7 @@ Note right of 服务器: 查询数据库，拼接html字符串(模板)
 Note left of 客户端: 渲染html
 ```
 
-### 单页应用 Single Page App
+## 单页应用 Single Page App
 单页应用优秀的用户体验，使其逐渐成为主流，页面内容由js渲染出来，这种方式成为客户端渲染。
 
 ```sequence
@@ -117,7 +124,7 @@ spa两个问题。
 + 首屏内容到达数据长
 + seo不友好
 
-### 服务端渲染 Server Side Render
+## 服务端渲染 Server Side Render
 ssr解决方案，后端渲染出完整的首屏dom结构返回，前端拿到的内容包括首屏及完整spa结构，应用激活后仍然按照spa方式运行买这种页面渲染方式被称为服务端渲染
 
 ```sequence
@@ -131,22 +138,15 @@ Note left of 客户端: 显示首屏、激活
 ### 路由
 路由支持仍然使用vue-router
 
-### 创建路由实例
-每次亲故去的url委托给vue-router处理
-```js
-// 引入vue-router
-
-```
-
-## 同构开发SSR应用
+### 同构开发SSR应用
 对于同构开发，我们仍然使用webpack打包，我们要解决两个问题：**服务器首屏渲染和客户端渲染**
 
-### 构建流程
+#### 构建流程
 目标是生成一个【服务器bundle】用于服务器首屏渲染，和一个【客户端bundle】用于客户端激活。
 
 ![](https://cloud.githubusercontent.com/assets/499550/17607895/786a415a-5fee-11e6-9c11-45a2cfdf085c.png)
 
-### 代码结构
+#### 代码结构
 除了两个不同入口之外，其他结构和之前vue应用完全相同。
 ```
 |-- src
@@ -159,7 +159,7 @@ Note left of 客户端: 显示首屏、激活
     |-- entry-server.js #服务端入口，用于首屏内容渲染
 ```
 
-### 路由配置
+#### 路由配置
 创建 src/router/index.js
 
 ```js
@@ -192,7 +192,7 @@ export default function createRouter() {
 }
 ```
 
-### 主文件
+#### 主文件
 跟之前不同，主文件是负责创建vue实例的工厂，每次请求均会有独立的vue实例创建。创建main.js
 
 ```js
@@ -215,7 +215,7 @@ export default function createApp(context) {
 }
 ```
 
-### 服务器入口
+#### 服务器入口
 上面的bundle就是webpack打包的服务器bundle，我们需要编写服务端入口文件 src/entry-server.js
 
 它的任务是创建Vue实例并根据传入url指定首屏
@@ -237,7 +237,7 @@ export default context => {
 };
 ```
 
-### 客户端入口
+#### 客户端入口
 客户端入口只需创建vue实例并执行挂载，这一步称为激活。创建entry-client.js
 
 ```js
@@ -252,7 +252,7 @@ router.onReady(() => {
 });
 ```
 
-### webpack配置
+#### webpack配置
 
 安装依赖
 ```shell
@@ -328,7 +328,7 @@ module.exports = defineConfig({
 })
 ```
 
-### 脚本配置
+#### 脚本配置
 
 安装依赖
 ```shell
@@ -347,7 +347,7 @@ npm i cross-env -D
 ```
 > 执行打包：npm run build
 
-### 宿主文件
+#### 宿主文件
 最后需要定义宿主文件，修改 public/index.html
 ```html
 <!DOCTYPE html>
@@ -364,7 +364,7 @@ npm i cross-env -D
 </html>
 ```
 
-### 服务器启动文件
+#### 服务器启动文件
 修改服务器启动文件，现在需要处理所有路由。 server/04-ssr.js
 
 ```js
@@ -410,5 +410,184 @@ server.listen(80, () => {
 });
 ```
 
+#### 整合vue
+安装vuex
+```shell
+npm i -S vuex
+```
 
+store/index.js
+```js
+import Vue from 'vue';
+import Vuex from 'vuex';
 
+Vue.use(Vuex);
+
+export default function createStore() {
+  return new Vuex.Store({
+    state: {
+      count: 108
+    },
+    mutations: {
+      add(state) {
+        state.count += 1
+      }
+    }
+  })
+}
+```
+
+挂载store main.js
+```js
+import Vue from 'vue'
+import App from './App.vue'
+import createRouter from './router'
+import createStore from './store'
+
+Vue.config.productionTip = false
+
+// 需要返回一个应用程序工厂, 返回Vue实例和Router实例、 Store实例
+export default function createApp(context) {
+  // 处理首屏，就要先处理路由跳转
+  const router = createRouter();
+  const store = createStore();
+  const app = new Vue({
+    router,
+    store,
+    context,
+    render: h => h(App)
+  })
+  return {app, router, store};
+}
+```
+
+#### 数据预取
+服务器端渲染的是应用程序的"快照"，如果应用依赖于一些异步数据，那么在开始渲染之前，需要先预取和解析好这些数据。
+
+异步数据获取， store/index.js
+```js
+import Vue from 'vue';
+import Vuex from 'vuex';
+
+Vue.use(Vuex);
+
+export default function createStore() {
+  return new Vuex.Store({
+    state: {
+      count: 0
+    },
+    mutations: {
+      init(state, count) {
+        state.count = count;
+      },
+      add(state) {
+        state.count += 1
+      }
+    },
+    actions: {
+      // 加一个异步请求count的action
+      getCount({commit}) {
+        return new Promise(resolve => {
+          setTimeout(() => {
+            commit('init', Math.random() * 100);
+            resolve();
+          }, 1000);
+        })
+      }
+    }
+  })
+}
+```
+
+组件中的数据预取逻辑。 Home.vue
+```js
+export default {
+  // 约定预取逻辑编写在预期钩子asyncData中
+  asyncData({store}) {
+    // 触发action后，返回Promise以便确定请求结果
+    return store.dispatch('getCount');
+  }
+}
+```
+
+服务器数据余预期 entry-server.js
+```js
+import createApp from "@/main";
+
+// 用于首屏渲染
+// context由renderer传入
+export default context => {
+  return new Promise((resolve, reject) => {
+    // 获取路由器和app实例
+    const {app, router, store} = createApp();
+    // 获取首屏地址
+    router.push(context.url);
+    router.onReady(() => {
+      // 获取当前匹配的所有组件
+      const matched = router.getMatchedComponents();
+      // 404
+      if (!matched.length) {
+        return reject({
+          code: 404,
+          message: '未查询到对应组件',
+        });
+      }
+      // 遍历matched,判断它们内部有没有asyncData
+      // 如果有就执行它们，等待执行完毕再返回
+      Promise.all(matched.map(component => {
+        if (component.asyncData) {
+          return component.asyncData({
+            store,
+            route: router.currentRoute,
+          })
+        }
+      })).then(() => {
+        // 约定将app数据状态放入context.state
+        // 渲染器会将state序列化成字符串 window.__INITIAL_STATE__
+        // 未来在前端激活之前可以再恢复它
+        context.state = store.state;
+        resolve(app);
+      }).catch(reject);
+    }, reject);
+  })
+};
+```
+
+客户端在挂载到应用程序之前，store就应该获取到状态 entry-client.js
+```js
+import createApp from "@/main";
+
+// 客户端激活
+const {app, router, store} = createApp();
+
+// 当使用template时，context.state将作为window.__INITIAL_STATE__状态自动嵌入到最终的HTML
+// 在客户端挂载到应用程序前，store就应该获取到状态
+// 还原state
+if (window.__INITIAL_STATE__) {
+  store.replaceState(window.__INITIAL_STATE__);
+}
+
+router.onReady(() => {
+  // 挂载激活
+  app.$mount('#app');
+});
+```
+
+客户端预期处理 main.js
+```js
+// 加一个全局混入，处理客户端asyncData调用
+Vue.mixin({
+  beforeMount() {
+    const {asyncData} = this.$options;
+    if (asyncData) {
+      // 将获取数据操作分配给promise
+      // 以便在组件中，我们可以在数据准备就绪后
+      // 通过运行`this.dataPromise.then`来执行其他任务
+      this.dataPromise = asyncData({
+        store: this.$store,
+        route: this.$route,
+      });
+    }
+  }
+})
+```

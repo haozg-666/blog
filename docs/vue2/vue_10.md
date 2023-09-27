@@ -21,4 +21,20 @@ Nuxt.js是一个基于Vue.js的通用应用框架。
 
 ![](https://v2.nuxt.com/_nuxt/image/de48ca.svg)
 
+## 案例
+实现如下功能点
++ 服务端渲染
++ 权限控制
++ 全局状态管理
++ 数据接口管理
+
+## 路由
+
+### 路由生成
+pages目录中所有*.vue文件自动生成应用的路由配置，新建：
++ pages/admin.vue 商品管理页
++ pages/login.vue 登录页
+
+### 导航
+添加路由导航 layouts/default.vue
 

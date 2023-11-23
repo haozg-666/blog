@@ -1,40 +1,86 @@
 ---
 lang: zh-CN
-title: 【10】Nuxt.js 实战
-description: 【10】Nuxt.js 实战
+title: 【10】Nuxt3 文档说明
+description: 【10】Nuxt3 文档说明
 ---
 
-# Nuxt.js 实战
-Nuxt.js是一个基于Vue.js的通用应用框架。
+# 文档
 
-通过对客户端/服务端基础架构的抽象组织，Nuxt.js主要关注的是应用的UI渲染。
+## 介绍
 
-## nuxt.js的特性
-+ 代码分层
-+ 服务端渲染
-+ 强大的路由功能
-+ 静态文件服务
-+ ...
+## 安装
 
-## nuxt渲染流程
-一个完整的服务器请求到渲染的流程
+## 配置
 
-![](https://v2.nuxt.com/_nuxt/image/de48ca.svg)
+## 视图
 
-## 案例
-实现如下功能点
-+ 服务端渲染
-+ 权限控制
-+ 全局状态管理
-+ 数据接口管理
+## 资源
+
+## 样式化
 
 ## 路由
 
-### 路由生成
-pages目录中所有*.vue文件自动生成应用的路由配置，新建：
-+ pages/admin.vue 商品管理页
-+ pages/login.vue 登录页
+## SEO和Meta
 
-### 导航
-添加路由导航 layouts/default.vue
+## 过渡效果
+
+## 数据获取
+
+## 状态管理
+
+## 错误处理
+
+Nuxt3是一个全栈框架，这意味着在不同的上下文中可能会发生几种无法预防的用户运行时错误：
++ Vue渲染声明周期中的错误（SSR和CSR）
++ Nitro服务器声明中期中的错误（`server/`目录）
++ 服务器和客户端启动错误（SSR和CSR）
++ 下载JS chunk时错误
+`SSR代表 Server-Side Rendering，CSR代表 Client-Side Rendering`
+
+### Vue渲染声明周期
+1. 可以使用`onErrorCaptured`来捕获Vue错误。
+2. Nuxt提供了`Vue:error`钩子，如果有任何错误传播到顶层，将会调用该钩子。
+3. 可以通过`vueApp.config.errorHandler`提供一个全局处理程序。它将接收所有的Vue错误，即使这些错误已经被处理。
+
+```ts
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
+    // 处理错误，例如上报到一个服务
+  }
+
+  // 也可以这样
+  nuxtApp.hook('vue:error', (error, instance, info) => {
+    // 处理错误，例如上报到一个服务
+  })
+})
+```
+
+### 启动错误
+如果启动Nuxt应用时出现任何错误，Nuxt将会调用`app:error`钩子。
++ 运行Nuxt插件
++ 处理`app.created`和`app:beforeMount`钩子
++ 将你的Vue应用渲染为HTML(在SSR期间)
++ 挂载应用程序（在客户端），不过应该使用`onErrorCaptured`或`vue:error`来处理这种情况
++ 处理`app:mounted`钩子
+
+### Nitor服务器声明周期
+目前无法为这些错误定义一个服务器端处理程序，但可以渲染一个错误页面
+
+### JS chunk错误
+由于网络连接故障或新部署（使旧的散列JS chunk URL失效）,你可能会遇到块加载错误。Nuxt提供了内置支持来处理块加载错误，当在路由导航过程中某个块加载错误，它会执行硬刷新。
+
+你可以通过将`experimental.emitRouteChunkError`设置为false(完全禁用对这些错误的处理)或`manual`(手动处理错误)来更改此行为。如果你想手动处理块加载错误，
+
+原生实现可通过监听`router.error()`实现。
+
+### 错误页面
+
+
+## 服务器
+
+## 图层
+
+## 部署
+
+## 测试
 

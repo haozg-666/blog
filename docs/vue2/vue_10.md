@@ -75,6 +75,24 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 ### 错误页面
 
+::: warning 当Nuxt遇到致命错误（服务器上的任何未处理的错误，或客户端上使用`fatal: true`创建的错误），它将要么渲染一个JSON响应（如果使用`Accept: application/json`头部请求），要么触发一个全屏错误页面。
+:::
+
+在以下情况喜爱，可能会在服务器生命周期中发生错误：
++ 处理Nuxt插件
++ 将你的Vue应用程序渲染为HTML
++ 服务器API路由抛出错误
+
+它也可能在客户端上发生以下情况：
++ 处理Nuxt插件
++ 在改在应用程序之前（`app:beforeMount`钩子）
++ 如果错误没有使用`onErrorCaptured`或`vue:error`钩子进行处理，则在挂载应用程序时
++ 在浏览器中初始化和挂载Vue应用程序（`app:mounted`）
+
+通过在应用程序原目录中添加`~/error.vue`，可以自定义默认错误页面，与`app.vue`放在一起。
+
+
+
 
 ## 服务器
 

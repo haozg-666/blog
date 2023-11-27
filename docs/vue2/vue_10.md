@@ -211,7 +211,7 @@ Nuxt的服务器框架允许你构建**全栈应用程序**。例如，你可以
 
 ### 有Nitro驱动
 
-Nuxt的服务器使用的是`Nitro`。Nitro最初所为Nuxt创建的，但现在所UnJS的一部分，也被其他创建使用，甚至可以单独使用。
+Nuxt的服务器使用的是`Nitro`。Nitro最初所为Nuxt创建的，但现在是UnJS的一部分，也被其他创建使用，甚至可以单独使用。
 
 使用Nitro基于Nuxt超能力：
 + 对应用程序的服务器端部分拥有完全控制权
@@ -265,6 +265,34 @@ export default defineNuxtConfig({
 Nitro用于构建具有服务器端渲染和预渲染功能的应用程序。
 
 ## 图层
+Nuxt提供了一个强大的系统，允许你扩展默认的文件、配置等。
+
+Nuxt3的核心功能之一就是图层和扩展支持。你可以扩展默认的Nuxt应用程序，以便重组组件、工具和配置。图层结构几乎与标准的Nuxt应用程序相同，这使得它们易于编写和维护。
+
+### 使用场景
++ 使用`nuxt.config`和`app.config`在项目之间共享可重用的配置预设
++ 使用`components/`目录创建组件库
++ 使用`composables/`和`utils/`目录创建实用工具和可组合库
++ 创建Nuxt模块预设
++ 在项目之间共享标准设置
++ 创建Nuxt主题
+
+### 使用方法
+
+你可以通过在`nuxt.config.ts`文件中添加`extends`属性来扩展一个图层。
+
+```ts
+export default defineNuxtConfig({
+  extends: [
+    // 从本地图层扩展
+    '../base',
+    // 从已安装的npm包扩展
+    '@my-themes/awesome',
+    // 从git仓库扩展
+    'github:my-themes/awwsome#v1'
+  ]
+})
+```
 
 ## 部署
 

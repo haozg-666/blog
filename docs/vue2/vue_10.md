@@ -296,5 +296,30 @@ export default defineNuxtConfig({
 
 ## 部署
 
+Nuxt应用可以部署在Node.js服务器上，预渲染以进行静态托管，或部署到无服务器或边缘（CDN）环境中。
+
+### Node.js服务器
+
+使用Nitro中的Node.js服务器预设可以在任何Node托管上部署。
++ **默认输出格式**，如果没有指定或自动检测
++ 仅加载渲染请求所需的块，以获得最佳的冷启动时间
++ 适用于将Nuxt应用部署到任何Node.js托管上
+
+#### 入口点
+使用Node服务器预设运行`Nuxt build`后，将得到一个启动准备就绪的Node服务器的入口点。
+```shell
+node .output/server/index.mjs
+```
+
+这将启动你的生气Nuxt服务器，默认监听端口为3000.
+
+它会遵循以下运行时环节变量：
++ `NITRO_PORT`或`PORT`（默认为`3000`）
++ `NITRO_HOST`或`HOST`（默认为`0.0.0.0`）
++ `NITRO_SSL_CERT`或`BITRO_SSL_KEY`-如果两者都存在，则会以HTTPS模式启动服务器。在绝大多数情况喜爱，除了测试之外，不应该使用这个选项，Nitro服务器应该在像nginx或Cloudflare这样的反向代理后面运行，由它们终止SSL。
+
+#### PM2
+
+
 ## 测试
 

@@ -311,15 +311,125 @@ Nuxt应用可以部署在Node.js服务器上，预渲染以进行静态托管，
 node .output/server/index.mjs
 ```
 
-这将启动你的生气Nuxt服务器，默认监听端口为3000.
+这将启动你的生产Nuxt服务器，默认监听端口为3000。
 
 它会遵循以下运行时环节变量：
 + `NITRO_PORT`或`PORT`（默认为`3000`）
 + `NITRO_HOST`或`HOST`（默认为`0.0.0.0`）
-+ `NITRO_SSL_CERT`或`BITRO_SSL_KEY`-如果两者都存在，则会以HTTPS模式启动服务器。在绝大多数情况喜爱，除了测试之外，不应该使用这个选项，Nitro服务器应该在像nginx或Cloudflare这样的反向代理后面运行，由它们终止SSL。
++ `NITRO_SSL_CERT`或`BITRO_SSL_KEY`-如果两者都存在，则会以HTTPS模式启动服务器。在绝大多数情况下，除了测试之外，不应该使用这个选项，Nitro服务器应该在像nginx或Cloudflare这样的反向代理后面运行，由它们终止SSL。
 
 #### PM2
+要使用`pm2`，请使用`ecosystem.config.js`文件：
 
+```js
+module.exports = {
+  apps: [
+    {
+      name: 'NuxtAppName',
+      port: '3000',
+      exec_mode: 'cluster',
+      instances: 'max',
+      script: './.output/server/index.mjs'
+    }
+  ]
+}
+```
+
+#### 集群模式
+
+你可以使用`NITRO_PRESET=node_cluster`来利用Node.js的cluster模块来提高多进程性能。
+
+默认情况下，工作负载会使用轮询策略分发给工作进程。
+
+### 静态托管
+
+有两种方式可以将Nuxt应用部署到任何静态托管服务上：
++ 使用`ssr:true`进行静态站点生成（SSG）,在构建时预渲染应用程序的路由（这是运行`nuxi generate`时的默认行为）。它还会生成`/200.html`和`/400.html`单页面应用回退页面，这些页面可以在客户端上渲染动态路由或404错误（尽管您可能需要在静态主机上进行配置）
++ 或者，你可以使用`ssr:false`进行预渲染（静态单页面应用）。这将产生带有空的`<div id="__nuxt"></div>`的HTML页面，通常用于渲染Vue应用的位置。你会失去许多预渲染站点的SEO优势，因此建议使用`<ClientOnly>`来包装无法在服务器端渲染的站点部分（如果有的话）。
+
+#### 基于爬虫的预渲染
+使用`nuxi generate`命令使用Nitro爬虫构建和预渲染应用程序。这个命令类似于将`nuxt build`运行时的`nitro.static`选项设置为`true`，或者运行`nuxt build --prerender`。
+
+```shell
+npx nuxi generate
+```
+
+现在可以将`.output/public`目录部署到任何静态托管服务上，或者使用`npx serve .output/public`在本地预览。
+
+Nitro爬虫的工作原理：
+1. 加载应用程序的根路由（`/`）的HTML、`~/pages`目录中的任何非动态页面以及`nitro.prerender.routes`数组中的其他路由。
+2. 将HTML和`payload.json`保存到`~/.output/public/`目录，以进行静态服务。
+3. 查找HTML中的所有锚点标签（`<a href=""`）以导航到其他路由。
+4. 对每个找到的锚点标签重复步骤1-3，直到没有更多的锚点标签可以爬取。
+
+这一点很重要，因为没有连接到可发现页面的页面无法自动预渲染。
+
+#### 选择性预渲染
+你可以手动指定Nitro将在构建期间获取和预渲染的路由，或者忽略不想预渲染的路由，比如在`nuxt.config`文件中的`/dynamic`路由：
+
+```ts
+defineNuxtConfig({
+  nitro: {
+    prerender: {
+      routes: ['/user/1', 'user/2'],
+      ignore: ['/dynamic']
+    }
+  }
+})
+```
+
+你可以将此与`crawLinks`选项结合使用，以预渲染一组爬虫无法发现的路由，比如你的`/sitemap.xml`或`/robots.txt`：
+
+```ts
+defineNuxtConfig({
+  nitro: {
+    prerender: {
+      crawlLinks: true,
+      routes: ['/sitemap.xml', '/robots.txt']
+    }
+  }
+})
+```
+
+将`nitro.prerender`设置为true类似于将`nitro.prerender.crawlLinks`设置为true。
+
+#### 仅客户端渲染
+如果你不想预渲染你的路由，另一种使用静态托管的方式是在`nuxt.config`文件中将ssr属性设置为false。`nuxi generate`命令将输出一个`.output/public/index.html`入口点和类似经典客户端端Vue.js应用程序的JavaScript捆绑包。
+
+```ts
+defineNuxtConfig({
+  ssr: false
+})
+```
+
+### 预设
+除了Node.js服务器和静态托管服务之外，Nuxt3 项目还可以使用几个经过充分测试的预设进行部署，并进行最少的配置。
+
+你可以在`nuxt.config`文件中明确设置所需的预设：
+```ts
+export default {
+  nitro: {
+    preset: 'node-server'
+  }
+}
+```
+
+或者在运行`nuxt build`时使用`NITRO_PRESET`环境变量：
+```shell
+NITRO_PRESET=node-server nuxt build
+```
+
+### CDN代理
+在大多数情况下，Nuxt可以与不由Nuxt自身生成或创建的第三方内容一起工作，但有时这样的内容可能会引起问题，尤其是Cloudflare 的“Minification and Security Options”。
+
+因此，你应该确保在 Cloudflare 中取消选中 / 禁用以下选项。否则，不必要的重新渲染或水合错误可能会影响你的生产应用程序。
+1. 速度 > 优化 > 自动缩小：取消选中 JavaScript、CSS 和 HTML
+2. 速度 > 优化 > 禁用 "Rocket Loader™"
+3. 速度 > 优化 > 禁用 "Mirage"
+4. Scrape Shield > 禁用 "Email Address Obfuscation"
+5. Scrape Shield > 禁用 "Server-side Excludes"
+
+通过这些设置，你可以确保 Cloudflare 不会向你的 Nuxt 应用程序注入可能引起不必要副作用的脚本。
 
 ## 测试
 

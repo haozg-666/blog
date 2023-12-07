@@ -432,4 +432,95 @@ NITRO_PRESET=node-server nuxt build
 通过这些设置，你可以确保 Cloudflare 不会向你的 Nuxt 应用程序注入可能引起不必要副作用的脚本。
 
 ## 测试
+在Nuxt3中，我们有一个重写版本的`@nuxt/test-utils`。我们支持Vitest和Jest作为测试运行器。
 
+### 安装
+```shell
+pnpm add --dev @nuxt/test-utils vitest
+```
+
+### 设置
+在每个使用`@nuxt/test-utils`辅助方法的`describe`块中，你需要在开始之前设置测试上下文。
+
+```ts
+import {describe, test} from 'vitest';
+import {setup, $fetch} from '@nuxt/test-utils';
+
+describe('我的测试', async () => {
+  await setup({
+    // 测试上下文选项
+  })
+  
+  test('我的测试', () => {
+    // ...
+  })
+})
+```
+
+在幕后，`setup`在`beforeAll`、`beforeEach`、`afterEach`和`afterAll`中执行一系列任务，以正确设置Nuxt测试环境。
+
+请参阅下面的选项以了解`setup`方法。
+
+#### Nuxt配置
++ `rootDir`：Nuxt应用所在目录的路径。
+  + 类型：`string`
+  + 默认值：`'.'`
++ `configFile`：配置文件的名称
+  + 类型：`string`
+  + 默认值：`'nuxt.config'`
+
+#### 时间设置
++ `setupTime`：允许`setupTest`完成其工作的时间（可能包括构建或生成Nuxt应用程序的文件，取决于传递的选项）。
+  + 类型：`number`
+  + 默认值：`60000`
+
+#### 功能
++ `server`：是否启动一个服务器来响应测试套件中的请求。
+  + 类型：`boolean`
+  + 默认值: `true`
++ `port`：如果提供，将启动的测试服务器端口设置为该值。
+  + 类型：`number | undefined`
+  + 默认值: `undefined`
++ `build`：是否运行单独的构建步骤。
+  + 类型：`boolean`
+  + 默认值: `true`(如果`browser`或`server`被禁用，则为false)
++ `browser`：在幕后，Nuxt测试工具使用`playwright`进行浏览器测试。如果设置了此选项，将会启动一个浏览器，并且可以在后续的测试套件中进行控制。
+  + 类型：`boolean`
+  + 默认值: `false`
++ `browserOptions`：
+  + 类型：具有以下属性的`object`
+    + `type`：要启动的浏览器类型，可以是`chromium`、`firefox`或`webkit`
+    + `launch`：在启动浏览器时将传递给`playwright`的选项对象。
++ `runner`：指定测试套件的运行期。目前推荐使用Vitest。
+  + 类型：`'vitest' | 'jest'`
+  + 默认值: `vitest`
+
+### API
+
+#### `$fetch(url)`
+
+获取服务器渲染页面的HTML。
+
+```js
+import {$fetch} from '@nuxt/test-utils';
+const html = await $fetch('/');
+```
+
+#### `fetch(url)`
+
+获取服务器渲染页面的响应。
+
+```js
+import {fetch} from '@nuxt/test-utils';
+const res = await fetch('/');
+const {body, headers} = res;
+```
+
+#### `url(path)`
+
+获取给定页面的完整URL(包括测试服务器运行的端口)。
+
+```js
+import {url} from '@nuxt/test-utils';
+const pageUrl = url('/page');
+```

@@ -64,7 +64,218 @@ Nuxt由不同的核心包组成：
 
 ## 安装
 
+### 新项目
+
+**先决条件**
++ Node.js - `v16.10.0`或更高版本
++ 文本编辑器
++ 终端 - 用于运行Nuxt命令
+
+打开一个终端，并使用以下命令创建一个新的起步项目：
+```bash
+pnpm dlx nuxi@latest init <project-name>
+```
+
+打开项目文件夹：
+```bash
+code <project-name>
+```
+
+安装依赖：
+```bash
+# 在运行 pnpm install 之前，请确保在 `.npmrc` 中设置了 `shamefully-hoist=true`
+pnpm install
+```
+
+### 开发服务器
+现在你可以以开发模式启动你的Nuxt应用程序了。
+```bash
+pnpm dev -o
+```
+
+### 下一步
+现在你可以创建了你的Nuxt3项目，你可以开始构建你的应用程序了。
+
 ## 配置
+
+默认情况下，Nuxt已经配置了大多数使用情况。`nuxt.config.ts`文件可以覆盖和扩展此默认配置。
+
+### Nuxt配置
+`nuxt.config.ts`文件位于Nuxt项目的根目录，可以覆盖或扩展应用程序的行为。
+
+一个最简配置文件导出了`defineNuxtConfig`函数，函数中包含了一个配置对象。`defuneNuxtConfig`助手函数在全局范围内无需导入即可使用。
+```ts
+export default defineNuxtConfig({
+  // 我的nuxt配置
+})
+```
+
+通常在文件中会提到此文件，例如添加自定义脚本、注册模块或更改渲染模式。
+
+#### 环境覆盖
+你可以在`nuxt.config`中配置完全类型化的环境覆盖。
+```ts
+export default defineNuxtConfig({
+  $production: {
+    routeRules: {
+      '/**': {isr: true}
+    },
+    $development: {
+      //
+    }
+  }
+})
+```
+
+#### 环境变量和私有令牌
+`runtimeConfig`API将像环节变量这样的值暴露给应用程序的其余部分。默认情况下，这些键只在服务器端可用。`runtimeConfig.public`中的键也可以在客户端使用。
+
+这些值应该在`nuxt.config`中定义，并可以使用环节变量进行覆盖。
+
+::: code-tabs
+
+@tab nuxt.config.ts
+
+```ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    // 只在服务器端可用的私有键
+    apiSecret: '123',
+    // public中的键也可以在客户端使用
+    public: {
+      apiBase: '/api'
+    }
+  }
+})
+```
+
+@tab .env
+
+```bash
+# 这将覆盖apiSecret的值
+NUXT_API_SECRET=api_secret_token
+```
+
+:::
+
+这些变量通过`useRuntimeConfig()`组合函数暴露给应用程序的其余部分。
+
+```vue
+<script setup lang="ts">
+  const runtimeConfig = useRuntimeConfig();
+</script>
+```
+
+### 应用程序配置
+`app.config.ts`文件位于原目录中（默认为项目的根目录），用于公开在构建时确定的公共变量。与`runtimeConfig`选项不同，这些变量不能使用环节变量进行覆盖。
+
+一个最简配置文件导出了`defineAppConfig`函数，函数中包含了一个配置对象。`defineAppConfig`助手函数在全局范围内无需导入即可使用。
+
+```ts
+export default defineAppConfig({
+  title: 'Hello Nuxt',
+  theme: {
+    dark: true,
+    colors: {
+      primary: '#ff0000'
+    }
+  }
+})
+```
+
+这些变量通过`useAppConfig`组合函数暴露给应用程序的其余部分。
+
+```vue
+<script setup lang="ts">
+  const appConfig = useAppConfig();
+</script>
+```
+
+### runtimeConfig与appConfig
+如上所述，`runtimeConfig`和`app.config`都用于向应用程序的其余部分公开变量。为了确定应该使用其中之一，以下是一些指导原则：
++ `runtimeConfig`：需要在构建后使用环节变量指定的私有或公共令牌。
++ `app.config`：在构建时确定的公共令牌，网站配置（如主题变体、标题）以及不敏感的项目配置等。
+
+
+|功能           | `runtimeConfig` | `app.config` |
+|--------------|-----------------|--------------|
+|客户端         | 已注入             | 已打包      |
+|环境变量       | ✅ 是             | ❌ 否     |
+|响应式         | ✅ 是             | ✅ 是     |
+|类型支持       | ✅ 部分            | ✅ 是     |
+|每个请求的配置  | ❌ 否             | ✅ 是     |
+|热模块替换     | ❌ 否             | ✅ 是     |
+|非原始JS类型   | ❌ 否             | ✅ 是     |
+
+
+### 外部配置文件
+Nuxt使用`nuxt.config.ts`文件作为配置的唯一来源，并跳过读取外部配置文件。在构建项目的过程中，你可能需要配置这些文件。下表列出了常见的配置以及如何在Nuxt中配置它们。
+
+| 名称      | 配置文件                  | 如何配置                        |
+|---------|-----------------------|-----------------------------|
+| Nitro   | ~~`nitro.config.ts`~~ | 在`nuxt.config`中使用`nitro`键   |
+| postCss | ~~`postcss.config.ts`~~  | 在`nuxt.config`中使用`postcss`键 |
+| Vite    | ~~`vite.config.ts`~~     | 在`nuxt.config`中使用`vite`键    |
+| webpack | ~~`webpack.config.ts`~~   | 在`nuxt.config`中使用`webpack`键 |
+
+以下是其他常见配置文件的列表：
+
+| 名称          | 配置文件                 |
+|-------------|----------------------|
+| TypeScript  | `tsconfig.json`      |
+| ESLint      | `.eslintrc.js`       |
+| Prettier    | `prettierrc.json`    |
+| Stylelint   | `.stylelintrc.json`  |
+| TailwindCss | `tailwind.config.js` |
+| Vitest      | `vitest.config.ts`   |
+
+### Vue配置
+
+#### 使用Vite
+如果你需要传递选项给`@vitejs/plugin-vue`或`@vitejs/plugin-vue-jsx`，你可以在你的`nuxt.config`文件中进行配置。
+
++ `vite.vue`用于`@vitejs/plugin-vue`。
++ `vite.vueJSx`用于`@vitejs/plugin-vue-jsx`。
+
+```ts
+export default deinfeNuxtConfig({
+  vite: {
+    vue: {
+      customElement: true,
+    },
+    vueJsx: {
+      mergeProps: true,
+    }
+  }
+})
+```
+
+#### 使用webpack
+如果你使用webpack并且需要配置`vue-loader`，你可以在`nuxt.config`文件中使用`webpack.loaders.vue`键进行配置。
+
+```ts
+export default defineNuxtConfig({
+  webpack: {
+    loaders: {
+      vue: {
+        hotReload: true,
+      }
+    }
+  }
+})
+```
+
+#### 启用实验性Vue功能
+你可能需要在Vue中启用实验性功能，例如`defineModel`或`propsDestructure`。无论你使用哪个构建工具，Nuxt都提供了一种简单的方法在`nuxt.config.ts`中进行配置：
+
+```ts
+export default defineNuxtConfig({
+  vue: {
+    defineModel: true,
+    propsDestructure: true,
+  }
+})
+```
 
 ## 视图
 
@@ -361,7 +572,7 @@ Nuxt应用可以部署在Node.js服务器上，预渲染以进行静态托管，
 
 #### 入口点
 使用Node服务器预设运行`Nuxt build`后，将得到一个启动准备就绪的Node服务器的入口点。
-```shell
+```bash
 node .output/server/index.mjs
 ```
 
@@ -404,7 +615,7 @@ module.exports = {
 #### 基于爬虫的预渲染
 使用`nuxi generate`命令使用Nitro爬虫构建和预渲染应用程序。这个命令类似于将`nuxt build`运行时的`nitro.static`选项设置为`true`，或者运行`nuxt build --prerender`。
 
-```shell
+```bash
 npx nuxi generate
 ```
 
@@ -469,7 +680,7 @@ export default {
 ```
 
 或者在运行`nuxt build`时使用`NITRO_PRESET`环境变量：
-```shell
+```bash
 NITRO_PRESET=node-server nuxt build
 ```
 
@@ -489,7 +700,7 @@ NITRO_PRESET=node-server nuxt build
 在Nuxt3中，我们有一个重写版本的`@nuxt/test-utils`。我们支持Vitest和Jest作为测试运行器。
 
 ### 安装
-```shell
+```bash
 pnpm add --dev @nuxt/test-utils vitest
 ```
 

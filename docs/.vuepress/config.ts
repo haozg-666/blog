@@ -193,6 +193,11 @@ export default defineUserConfig({
       // 你的选项
       // 启用 mermaid
       mermaid: true,
+      // 添加选项卡支持
+      tabs: true,
+      codetabs: true,
+      // 任务列表
+      tasklist: true,
     }),
   ],
 })

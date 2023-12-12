@@ -279,6 +279,150 @@ export default defineNuxtConfig({
 
 ## 视图
 
+### `app.vue`
+![](https://nuxt.com.cn/assets/docs/getting-started/views/app.svg)
+
+默认情况下，Nuxt将把这个文件视为入口点，并为应用程序的每个路由渲染其内容。
+
+```vue
+<template>
+  <div>
+    <h1>欢迎来到首页</h1>
+  </div>
+</template>
+```
+
+### 组件
+![](https://nuxt.com.cn/assets/docs/getting-started/views/components.svg)
+
+大多数组件是可重用的用户界面组件，如按钮和菜单。在Nuxt中，你可以在`components/`目录中创建这些组件，它们将整个应用程序中可用无需显式地导入。
+
+::: code-tabs
+
+@tab app.vue
+
+```vue
+<template>
+  <div>
+    <h1>欢迎来到首页</h1>
+    <AppAlert>
+      这是一个自动导入的组件。
+    </AppAlert>
+  </div>
+</template>
+```
+
+@tab components/AppAlert.vue
+
+```vue
+<template>
+  <span>
+    <slot />
+  </span>
+</template>
+```
+
+:::
+
+### 页面
+![](https://nuxt.com.cn/assets/docs/getting-started/views/pages.svg)
+
+页面代表了每个特定路由模式的视图。`pages/`目录中的每个文件都表示一个不同的路由，显示其内容。
+
+要使用页面，创建`pages/index.vue`文件并将`<NuxtPage />`组件添加到`app.vue`（或者删除`app.vue`以使用默认入口）。现在，你可以通过在`pages/`目录中添加新文件来创建更多页面及其对应的路由。
+
+::: code-tabs
+
+@tab pages/index.vue
+
+```vue
+<template>
+  <div>
+    <h1>欢迎来到首页</h1>
+    <AppAlert>
+      这是一个自动导入的组件。
+    </AppAlert>
+  </div>
+</template>
+```
+
+@tab pages/about.vue
+
+```vue
+<template>
+  <section>
+    <p>此页面将显示在 /about 路由。</p>
+  </section>
+</template>
+```
+
+:::
+
+### 布局
+![](https://nuxt.com.cn/assets/docs/getting-started/views/layouts.svg)
+
+页面是布局的包装器，包含了多个页面的共同用户界面，如页眉和页脚。布局是使用`<slot />`组件来显示**页面**内容的Vue文件。`layouts/default.vue`文件将被默认使用。自定义布局可以作为页面元数据的一部分进行设置。
+
+::: info 
+如果你的应用程序只有一个布局，我们建议使用`app.vue`和`<NuxtPage/>`。
+:::
+
+::: code-tabs
+
+@tab layouts/default.vue
+
+```vue
+<template>
+  <div>
+    <AppHeader />
+    <slot />
+    <AppFooter />
+  </div>
+</template>
+```
+
+@tab pages/index.vue
+
+```vue
+<template>
+  <h1>欢迎来到首页</h1>
+  <AppAlert>
+    这是一个自动导入的组件。
+  </AppAlert>
+</template>
+```
+
+@tab pages/about.vue
+
+```vue
+<template>
+  <section>
+    <p>此页面将显示在 /about 路由。</p>
+  </section>
+</template>
+```
+
+:::
+
+### 高级：扩展HTML模板
+你可以通过添加一个Nitro插件来完全控制HTML模板，该插件注册一个钩子函数。`render:html`钩子函数的回调函数允许你在将HTML发送到客户端之前对其进行修改。
+
+```ts
+import {response} from "express";
+
+export default defineNitroPlugin(nitroApp => {
+  nitroApp.hooks.hook('render:html', (html, {event}) => {
+    // 这将是HTML模版的对象表示形式。
+    console.log(html);
+    html.head.push(`<meta name="description" content="My custom description" />`);
+  })
+  // 你也可以在这里拦截响应
+  nitroApp.hooks.hook('render:response', (response, {event}) => {
+    console.log(response);
+  })
+})
+```
+
 ## 资源
 
 ## 样式化
@@ -341,7 +485,8 @@ export default defineNuxtPlugin((nuxtApp) => {
 
 ### 错误页面
 
-::: warning 当Nuxt遇到致命错误（服务器上的任何未处理的错误，或客户端上使用`fatal: true`创建的错误），它将要么渲染一个JSON响应（如果使用`Accept: application/json`头部请求），要么触发一个全屏错误页面。
+::: warning 
+当Nuxt遇到致命错误（服务器上的任何未处理的错误，或客户端上使用`fatal: true`创建的错误），它将要么渲染一个JSON响应（如果使用`Accept: application/json`头部请求），要么触发一个全屏错误页面。
 :::
 
 在以下情况下，可能会在服务器生命周期中发生错误：

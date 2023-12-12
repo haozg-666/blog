@@ -198,6 +198,8 @@ export default defineUserConfig({
       codetabs: true,
       // 任务列表
       tasklist: true,
+      // 是否启用自定义容器
+      container: true,
     }),
   ],
 })

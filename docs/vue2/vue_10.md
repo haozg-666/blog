@@ -425,6 +425,99 @@ export default defineNitroPlugin(nitroApp => {
 
 ## 资源
 
+Nuxt使用两个目录来处理样式表、字体或图片资源。
+
++ `public/`目录中的内容会按原样作为服务器根目录下的公共资源提供。
++ `assets/`目录按约定包含了你希望构建工具（Vite或webpack）处理的所有资源。
+
+### 公共目录
+`public/`目录作应用程序的公共服务器，用于存放在应用程序的指定URL下公开访问的静态资源。
+
+你可以通过应用程序的代码或浏览器的根URL`/`获取`public/`目录中的文件。
+
+#### 示例
+例如，在`public/img/`目录中引用一个图像文件，该文件可通过静态URL`/img/nuxt.png`访问：
+
+```vue
+<template>
+  <img src="/img/nuxt.png" alt="">
+</template>
+```
+
+### 资源目录
+Nuxt使用Vite(默认)或webpack来构建和打包你的应用程序。这些构建工具的主要功能是处理JavaScript文件，但它们可以通过插件（对于Vite）或加载器（对于webpack）来处理其他类型的资源，如样式表、字体或SVG。此步骤主要是为了提高性能或缓存目的而对原始文件进行转换（例如样式表的缩小或浏览器缓存失效）。
+
+按照约定，Nuxt使用`assets/`目录来存储这些文件，但该目录没有自动扫描功能，你可以使用任何其他名称。
+
+在应用程序的代码中，你可以通过使用`~/assets/`路径来引用位于`assets/`目录中的文件。
+
+#### 示例
+例如，引用一个图像文件，如果构建工具配置为处理该文件扩展名：
+
+```vue
+<template>
+  <img src="~/assets/img/nuxt.png" alt="">
+</template>
+```
+
+::: info
+Nuxt不会将`assets/`目录中的文件作为静态URL(如`/assets/my-file.png`)提供。如果你需要一个静态URL,请使用`public/`目录。
+:::
+
+### 全局样式导入
+要在你的Nuxt组件样式中全局插入语句，你可以在`nuxt.config`文件中使用`Vite`选项。
+
+#### 示例
+在这个示例中，有一个sass部分文件，其中包含颜色变量，供你的Nuxt页面和组件使用。
+
+::: code-tabs
+@tab assets/_colors.scss
+```scss
+$primary: #49240F;
+$secondary: #E4A79D;
+```
+
+@tab assets/_colors.sass
+```sass
+$primary: #49240F
+$secondary: #E4A79D
+```
+:::
+
+在你的`nuxt.config`中
+
+::: code-tabs
+@tab SCSS
+```ts
+export default defineNuxtConfig({
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: '@use "@/assets/_colors.scss" as *;'
+        }
+      }
+    }
+  }
+})
+```
+
+@tab SASS
+```ts
+export default defineNuxtConfig({
+  vite: {
+    css: {
+      preprocessorOptions: {
+        sass: {
+          additionalData: '@use "@/assets/_colors.sass" as *\n'
+        }
+      }
+    }
+  }
+})
+```
+:::
+
 ## 样式化
 
 ## 路由
@@ -436,6 +529,143 @@ export default defineNitroPlugin(nitroApp => {
 ## 数据获取
 
 ## 状态管理
+Nuxt提供了强大的状态管理库和useState组合函数，用于创建响应式且适用于SSR的共享状态。
+
+Nuxt提供了`useState`组合函数，用于在组件之间创建响应式且适用于SSR的共享状态。
+
+`useState`是一个适用于SSR的`ref`替代品。它的值将在服务器端渲染后保留（在客户端渲染期间进行hydration`），并通过唯一的键在所有组件之间共享。
+
+::: info 由于useState内部的数据将被序列化为JSON，因此重要的是它不包含无法序列化的内容，比如类、函数或符号。
+:::
+
+### 最佳实践
+::: warning 
+不要在`script setup>`或`setup()`函数之外定义`const state = ref()`。
+这样的状态将在所有访问你网站的用户之间共享，并可能导致内存泄漏！
+:::
+
+### 示例
+
+#### 基本用法
+在这个示例中，我们使用一个组件本地的计数器状态。任何使用`useState('counter')`的其他组件都共享同一个响应式状态。
+
+```vue
+<script setup lang="ts">
+const counter = useState('counter', () => Math.round(Math.random() * 1000))
+</script>
+
+<template>
+  <div>
+    计数器：{{ counter }}
+    <button @click="counter++">
+      +
+    </button>
+    <button @click="counter--">
+      -
+    </button>
+  </div>
+</template>
+```
+
+要全局失效缓存的状态，请参考`clearNuxtState`工具。
+
+#### 高级用法
+在这个示例中，我们使用一个组合函数从HTTP请求头中检测用户的默认语言环境，并将其保存在一个`locale`状态中。
+
+::: code-tabs
+@tabs composables/locale.ts
+
+```ts
+import type { Ref } from 'vue'
+
+export const useLocale = () => {
+  return useState<string>('locale', () => useDefaultLocale().value)
+}
+
+export const useDefaultLocale = (fallback = 'en-US') => {
+  const locale = ref(fallback)
+  if (process.server) {    
+    const reqLocale = useRequestHeaders()['accept-language']?.split(',')[0]
+    if (reqLocale) {
+      locale.value = reqLocale
+    }
+  } else if (process.client) {
+    const navLang = navigator.language
+    if (navLang) {
+      locale.value = navLang
+    }
+  }
+  return locale
+}
+
+export const useLocales = () => {
+  const locale = useLocale()
+  const locales = ref([
+    'en-US',
+    'en-GB',
+    ...
+    'ja-JP-u-ca-japanese'
+  ])
+  if (!locales.value.includes(locale.value)) {
+    locales.value.unshift(locale.value)
+  }
+  return locales
+}
+
+export const useLocaleDate = (date: Ref<Date> | Date, locale = useLocale()) => {
+  return computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'full' }).format(unref(date)))
+}
+```
+
+@tabs app.vue
+
+```vue
+<script setup lang="ts">
+const locales = useLocales()
+const locale = useLocale()
+const date = useLocaleDate(new Date('2016-10-26'))
+</script>
+
+<template>
+  <div>
+    <h1>Nuxt生日</h1>
+    <p>{{ date }}</p>    
+    <label for="locale-chooser">预览不同的语言环境</label>
+    <select id="locale-chooser" v-model="locale">
+      <option v-for="locale of locales" :key="locale" :value="locale">
+        {{ locale }}
+      </option>
+    </select>
+  </div>
+</template>
+```
+:::
+
+### 共享状态
+通过使用自动导入的组合函数，我们可以定义全局类型安全的状态并在整个应用程序中导入它们。
+
+```ts
+export const useCounter = () => useState<number>('counter', () => 0)
+export const useColor = () => useState<string>('color', () => 'pink')
+```
+
+```vue
+<script setup lang="ts">
+const color = useColor() // 与useState('color')相同
+</script>
+
+<template>
+  <p>当前颜色：{{ color }}</p>
+</template>
+```
+
+### 使用第三方库
+Nuxt曾经依赖于Vuex库来提供全局状态管理。如果你正在从Nuxt 2迁移，请参阅迁移指南。
+
+Nuxt对状态管理不持有特定观点，所有请根据你的需求选择合适的解决方案。Nuxt与最流行的状态管理库有多种集成方式，包括：
++ pinia - 官方推荐的Vue状态管理库
++ Harlem - 不可变的全局状态管理库
++ XState - 基于状态机的方法，具有可视化和测试状态逻辑的工具
 
 ## 错误处理
 

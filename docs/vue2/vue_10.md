@@ -520,6 +520,131 @@ export default defineNuxtConfig({
 
 ## 样式化
 
+在样式化方面，Nuxt非常灵活。你可以编写自己的样式，或者引用本地和外部样式表。你可以使用CSS预处理器、CSS框架、UI库和Nuxt模块来为你的应用程序添加样式。
+
+### 本地样式表
+
+如果你正在编写本地样式表，讲它们放在`assets/`目录是最自然的位置。
+
+#### 在组件中引入
+
+你可以在页面、布局和组件中直接引入样式表。你可以使用JavaScript的import，或者使用css的`@import`语句。
+
+```vue
+<script>
+// 使用静态导入以实现服务器端兼容性
+import '~/assets/css/first.css'
+
+// 注意：动态导入不兼容服务器端
+import('~/assets/css/first.css')
+</script>
+
+<style>
+@import url("~/assets/css/second.css");
+</style>
+```
+
+样式表将被内联到Nuxt渲染的HTML中。
+
+#### CSS属性
+
+你还可以使用Nuxt配置中的CSS属性。将你的样式表放在`assets/`目录是最自然的位置。然后你可以引用它的路径，Nuxt将会将它包含在应用程序的所有页面中。
+
+```ts
+export default defineNuxtConfig({
+  css: ['~/assets/css/main.css']
+})
+```
+
+样式表将被内嵌到Nuxt渲染的HTML中，全局注入并存在于所有页面中。
+
+#### 使用字体
+
+将本地字体文件放在`~/public/`目录中，例如`~/public/fonts`。然后可以在样式表中使用`url()`引用它们。
+
+```css
+@font-face {
+  font-family: 'FarAwayGalaxy';
+  src: url('/fonts/FarAwayGalaxy.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+```
+
+然后再样式表、页面或组件中按名称引用你的字体：
+```vue
+<style>
+h1 {
+  font-family: 'FarAwayGalaxy', sans-serif;
+}
+</style>
+```
+
+#### 通过NPM分发样式表
+
+你还可以引用通过npm分发的样式表。让我们以流行的`animate.css`库为例。
+
+```bash
+npm install animate.css
+```
+
+然后你可以直接在页面、布局和组件中引用它：
+
+```vue
+<script>
+import 'animate.css'
+</script>
+
+<style>
+@import url("animate.css");
+</style>
+```
+
+你还可以将该包作为字符串引用到Nuxt配置的css属性中。
+
+```ts
+export default defineNuxtConfig({
+  css: ['animate.css']
+})
+```
+
+### 外部样式表
+
+#### 动态添加样式表
+
+#### 使用Nitro插件修改渲染的head
+
+### 使用预处理器
+
+### 单文件组件（SFC）样式化
+
+#### 类和样式绑定
+
+#### 使用v-bind动态样式
+
+#### 作用域样式
+
+#### CSS模块
+
+#### 预处理器支持
+
+### 使用PostCSS
+
+### 利用布局实现多样式
+
+### 第三方库和模块
+
+#### 轻松加载Web字体
+
+### 进阶
+
+#### 过渡效果
+
+#### 字体高级优化
+
+#### LCP高级优化
+
 ## 路由
 
 ## SEO和Meta

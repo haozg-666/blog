@@ -608,44 +608,454 @@ export default defineNuxtConfig({
   css: ['animate.css']
 })
 ```
-
+  
 ### 外部样式表
 
+你可以通过在nuxt.config文件的head部分添加一个link元素来在应用程序中应用外部样式表。你可以使用不同的方法来实现这个目标。注意，本地样式表也可以以这种方式包含。
+
+你可以通过Nuxt配置的`app.head`属性来修改head:
+
+```ts
+export default defineNuxtConfig({
+  app: {
+    head: {
+      link: [
+        {
+          rel: 'stylesheet',
+          href: 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css'
+        }
+      ]
+    }
+  }
+})
+```
+ 
 #### 动态添加样式表
+
+你可以使用`usehead`组合式函数在代码中动态设置head中的值。
+
+```ts
+useHead({
+  link: [{ rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css' }]
+})
+```
+
+Nuxt在内部使用`unhead`。
 
 #### 使用Nitro插件修改渲染的head
 
+如果你需要更高级的控制，你可以使用hook拦截渲染的html，并以编程方式修改head/
+
+创建一个插件，放在`~/server/plugins/my-plugin.ts`中，像这样：
+
+```ts
+export default defineNitroPlugin((nitro) => {
+  nitro.hooks.hook('render:html', (html) => {
+    html.head.push('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">')
+  })
+})
+```
+
+外部样式表是渲染阻塞资源：它们必须在浏览器渲染页面之前加载和处理。包含过大样式的网页渲染时间更长。
+
 ### 使用预处理器
+
+要使用Scss/Sass/less或stylus等预处理器，首先要安装它。
+
+编写样式表的自然位置是`assets`目录。然后，你可以使用你的预处理器的语法在你的`app.vue`（或布局文件）中导入你的源文件。
+
+```vue
+<style lang="scss">
+  @use "~/assets/scss/main.scss";
+</style>
+```
+
+或者，你可以使用Nuxt配置的css属性。
+
+```ts
+export default defineNuxtConfig({
+  css: ['~/assets/scss/main.scss']
+})
+```
+
+如果你需要再预处理文件中注入代码，比如包含颜色变量的sass部分，你可以使用Vite的preprocessors选项来实现。上文中有示例。
 
 ### 单文件组件（SFC）样式化
 
+Vue和SFC的最大优点之一就是在处理样式方面非常好用。你可以直接在组件文件的央视快中编写CSS或预处理器代码，因此你可以拥有出色的开发体验，而无需使用CSS-in-JS等工具。不过，如果你想使用CSS-in-JS，你可以找到支持它的第三方库和模块，比如pinceau。
+
 #### 类和样式绑定
+
+你可以利用Vue SFC的特性，使用`class`和`style`属性为组件添加样式。
+
+::: code-tabs
+@tab Ref和Reactive
+
+```vue
+<script setup lang="ts">
+const isActive = ref(true);
+const hasError = ref(false);
+const classObject = reactive({
+  active: true,
+  'text-danger': false
+})
+</script>
+
+<template>
+  <div class="static" :class="{active: isActive, 'text-danger': hasError}"></div>
+  <dov :class="classObject"></dov>
+</template>
+```
+
+@tab Computed
+
+```vue
+<script setup lang="ts">
+const isActive = ref(true)
+const error = ref(null)
+
+const classObject = computed(() => ({
+  active: isActive.value && !error.value,
+  'text-danger': error.value && error.value.type === 'fatal'
+}))
+</script>
+
+<template>
+  <div :class="classObject"></div>
+</template>
+```
+
+@tab Array
+
+```vue
+<script setup lang="ts"> 
+const isActive = ref(true)
+const errorClass = ref('text-danger')
+</script>
+
+<template>
+  <div :class="[{ active: isActive }, errorClass]"></div>
+</template>
+```
+
+@tab Style
+
+```vue
+<script setup lang="ts">
+const activeColor = ref('red')
+const fontSize = ref(30)
+const styleObject = reactive({ color: 'red', fontSize: '13px' })
+</script>
+
+<template>
+  <div :style="{ color: activeColor, fontSize: fontSize + 'px' }"></div>
+  <div :style="[baseStyles, overridingStyles]"></div>
+  <div :style="styleObject"></div>
+</template>
+```
+:::
 
 #### 使用v-bind动态样式
 
+你可以在样式块中使用v-bind函数引用JavaScript变量和表达式。绑定将是动态的，这意味着如果变量值发生变化，样式将会更新。
+
+```vue
+<script setup lang="ts">
+const color = ref("red")
+</script>
+
+<template>
+  <div class="text">hello</div>
+</template>
+
+<style>
+.text {
+  color: v-bind(color);
+}
+</style>
+```
+
 #### 作用域样式
+
+scoped属性允许你将样式应用于组件内部。使用此属性声明的样式将只适用于该组件。
+
+```vue
+<template>
+  <div class="example">hi</div>
+</template>
+
+<style scoped>
+.example {
+  color: red;
+}
+</style>
+```
 
 #### CSS模块
 
+你可以使用module属性和CSS Modules。可以使用注入的$style变量访问它。
+
+```vue
+<template>
+  <p :class="$style.red">This should be red</p>
+</template>
+
+<style module>
+.red {
+  color: red;
+}
+</style>
+```
+
 #### 预处理器支持
+
+SFC样式块支持预处理器语法。Vite内置支持`.scss`、`.sass`、`.less`、`.styl`和`.stylus`文件，无需配置，你只需要安装它们，然后在SFC中使用lang属性直接引用它们。
+
 
 ### 使用PostCSS
 
+Nuxt内置了Postcss。你可以在`nuxt.config`文件中配置它。
+
+```ts
+export default defineNuxtConfig({
+  postcss: {
+    plugins: {
+      'postcss-nested': {},
+      'postcss-custom-media': {}
+    }
+  }
+})
+```
+
+为了在SFC中实现正确的语法高亮，你可以使用postcss lang属性。
+
+```vue
+<style lang="postcss">
+  /* 在这里编写 stylus */
+</style>
+```
+
+默认情况下，Nuxt已经预配置了以下插件：
++ postcss-import: 改进了`@import`规则
++ postcss-url: 转换`url()`语句
++ autoprefixer: 自动添加产商前缀
++ cssnano: 压缩和清除无用的css
+
 ### 利用布局实现多样式
+
+如果你需要完全不同的样式来样式化应用程序的不同部分，你可以使用布局。为不同的布局使用不同的样式。
+
+```vue
+<template>
+  <div class="default-layout">
+    <h1>默认布局</h1>
+    <slot />
+  </div>
+</template>
+
+<style>
+.default-layout {
+  color: red;
+}
+</style>
+```
 
 ### 第三方库和模块
 
+Nuxt在样式化方面没有固定的意见，提供了各种各样的选择。你可以使用任何你想要的样式工具，比如流行的库UnoCSS或Tailwind CSS。
+
+社区和Nuxt团队开发了许多Nuxt模块，以便更轻松的集成，你可以在网站的modules部分发现它们。以下是一些帮助你入门的模块：
+
++ UnoCSS: 即时按需的原子CSS引擎
++ Tailwind CSS: 实用优先的CSS框架
++ Fontaine: 字体度量回退
++ Pinceau: 使用性样式框架
++ Nuxt UI: 现代Web应用程序的UI库
+
+Nuxt模块为你提供了良好的开发体验，但请记住，如果你喜欢的工具没有一个模块，这并不意味着你不能再Nuxt中使用它！你可以为自己的项目自行配置它。根据工具的不同，你可能需要使用Nuxt插件和/或制作自己的模块。如果你这样做了，请与社区分享！
+
 #### 轻松加载Web字体
+
+你可以使用Nuxt Google Fonts模块来加载Google字体。
+
+如果你正在使用UnoCSS，请注意它附带了一个Web字体预设，方便地从常见提供商加载字体。
 
 ### 进阶
 
 #### 过渡效果
 
+Nuxt拥有与Vue相同的`<transition>`元素，并且还支持实验性的View Transitions API。
+
 #### 字体高级优化
+
+我们建议使用Fontaine来减少你的CLS。如果你需要更高级的功能，可以考虑创建一个Nuxt模块来扩展构建过程或Nuxt运行时。
+
+::: info 始终记得利用web生态系统中可用的各种工具和技术，使你的应用程序的样式更加简单高效。无论你是使用原生CSS、预处理器、PostCSS、UI库还是模块，Nuxt都能满足你的需求。祝你样式编写愉快！
+:::
 
 #### LCP高级优化
 
+你可以采取以下措施来加快全局CSS文件的下载速度：
++ 使用CDN，让文件物理上更接近你的用户
++ 压缩你的资源，最好使用Brotli
++ 使用HTTP2/HTTP3进行传递
++ 将你的资源托管在同一个域名下（不要使用不同的子域名）
+
+如果你正在使用Cloudflare、Netlify或Vercel等现代平台，大多数情况下这些事情应该会自动完成。 你可以在web.dev上找到一个LCP优化指南。
+
+如果你的所有CSS都由Nuxt内联，你可以（实验性地）完全停止在渲染的HTML中引用外部CSS文件。 你可以通过一个钩子来实现，你可以将它放在一个模块中或者你的Nuxt配置文件中。
+
+```ts
+export default defineNuxtConfig({
+  hooks: {
+    'build:manifest': (manifest) => {
+      // 找到应用程序入口的CSS列表
+      const css = manifest['node_modules/nuxt/dist/app/entry.js']?.css
+      if (css) {
+        // 从数组的末尾开始，向前遍历
+        for (let i = css.length - 1; i >= 0; i--) {
+          // 如果以'entry'开头，从列表中删除它
+          if (css[i].startsWith('entry')) css.splice(i, 1)
+        }
+      }
+    }
+  }
+})
+```
+
 ## 路由
+
+Nuxt的核心功能之一是文件系统路由。`pages/`目录中的每个Vue文件都会创建一个相应的URL(或路由)，用于显示文件的内容。通过为每个页面使用动态导入，Nuxt利用代码分割来仅加载所需路由的最小量JavaScript。
+
+### 页面
+
+Nuxt的路由基于`vue-router`，根据`pages/`目录中创建的每个组件的文件名生成路由。
+
+文件系统路由使用命名约定来创建动态和嵌套路由。
+
+::: code-tabs
+@tab 目录结构
+
+```bash
+| pages/
+---| about.vue
+---| index.vue
+---| posts/
+-----| [id].vue
+```
+
+@tab 生成的路由文件
+
+```json
+{
+  "routes": [
+    {
+      "path": "/about",
+      "component": "pages/about.vue"
+    },
+    {
+      "path": "/",
+      "component": "pages/index.vue"
+    },
+    {
+      "path": "/posts/:id",
+      "component": "pages/posts/[id].vue"
+    }
+  ]
+}
+```
+:::
+
+### 导航
+
+`<NuxtLink>`组件用于在页面直接创建连接。它会将`<a>`标签渲染为具有`href`属性设置为页面的路由。一旦应用程序被渲染，页面的切换将在JavaScript中进行，通过更新浏览器URL来实现。这样可以避免整页刷新，同时允许实现动画过渡效果。
+
+当`<NuxtLink>`在客户端视口中可见时，Nuxt会自动预取链接页面的组件和负载（生成的页面），从而加快导航速度。
+
+```vue
+<template>
+  <header>
+    <nav>
+      <ul>
+        <li><NuxtLink to="/about">关于</NuxtLink></li>
+        <li><NuxtLink to="/posts/1">文章1</NuxtLink></li>
+        <li><NuxtLink to="/posts/2">文章2</NuxtLink></li>
+      </ul>
+    </nav>
+  </header>
+</template>
+```
+
+### 路由参数
+
+`useRoute()`组合式函数可在Vue组件的`<script setup>`块或`setup()`方法中使用，以访问当前路由的详细信息。
+
+```vue
+<script setup lang="ts">
+const route = useRoute()
+
+// 当访问/posts/1时，route.params.id将为1
+console.log(route.params.id)
+</script>
+```
+
+### 路由中间件
+
+Nuxt提供了一个可自定义的路由中间件框架，您可以在应用程序中使用，非常适合提取在导航到特定路由之前要运行的代码。
+
+::: info 路由中间件在Nuxt应用程序的Vue部分中运行。尽管名称相似，但它们与在应用程序的Nitro服务器部分中运行的服务器中间件完全不同。
+:::
+
+
+有三种类型的路由中间件：
+1. 匿名（或内联）路由中间件，直接在使用它们的页面中定义。
+2. 命名路由中间件，放置在`middleware/`目录中，当在页面中使用时，会通过异步导入自动加载。（注意：路由中间件名称会转换为短横线分隔命名，因此`someMiddleware`会变成`some-middleware`）
+3. 全局路由中间件，放置在`middleware/`目录中（使用`.global`后缀），将在每次路由更改时自动运行。
+
+以下是保护`/dashboard`页面的`auth`中间件的示例：
+
+::: code-tabs
+@tab middleware/auth.ts
+```ts
+export default defineNuxtRouteMiddleware((to, from) => {
+  // isAuthenticated()是一个验证用户是否已经认证的示例方法
+  if (isAuthenticated() === false) {
+    return navigateTo('/login')
+  }
+})
+```
+@tab pages/dashboard.vue
+```vue
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'auth'
+})
+</script>
+
+<template>
+  <h1>欢迎来到您的仪表盘</h1>
+</template>
+```
+:::
+
+### 路由验证
+
+Nuxt通过每个要验证的页面中的`definePageMeta()`的`validate`属性提供路由验证。
+
+`validate`属性接受route作为参数。您可以返回一个布尔值来确定是否将此路由视为有效路由以渲染此页面。如果返回`false`，并且找不到其他匹配项，这将导致404错误。您还可以直接返回一个带有`statusCode`/`statusMessage`的对象以立即响应错误（其他匹配项将不会被检查）。
+
+如果你有更复杂的用例，可以使用匿名路由中间件代替。
+
+```vue
+<script setup lang="ts">
+definePageMeta({
+  validate: async (route) => {
+    // 检查id是否由数字组成
+    return /^\d+$/.test(route.params.id)
+  }
+})
+</script>
+```
 
 ## SEO和Meta
 
@@ -698,7 +1108,7 @@ const counter = useState('counter', () => Math.round(Math.random() * 1000))
 在这个示例中，我们使用一个组合函数从HTTP请求头中检测用户的默认语言环境，并将其保存在一个`locale`状态中。
 
 ::: code-tabs
-@tabs composables/locale.ts
+@tab composables/locale.ts
 
 ```ts
 import type { Ref } from 'vue'
@@ -742,7 +1152,7 @@ export const useLocaleDate = (date: Ref<Date> | Date, locale = useLocale()) => {
 }
 ```
 
-@tabs app.vue
+@tab app.vue
 
 ```vue
 <script setup lang="ts">

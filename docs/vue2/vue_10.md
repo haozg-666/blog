@@ -1059,6 +1059,90 @@ definePageMeta({
 
 ## SEO和Meta
 
+使用强大的头部配置、组合函数和组件来提升你的Nuxt应用的SEO。
+
+### 默认值
+
+Nuxt提供了合理的默认值，如果需要的话，你可以进行覆盖。
+
+```ts
+export default defineNuxtConfig({
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1'
+    }
+  }
+})
+```
+
+在你的`nuxt.config.ts`文件中提供`app.head`属性，可以自定义整个应用的头部。
+
+::: info 该方法不允许你提供响应式数据。我们建议在`app.vue`中使用`useHead()`。
+:::
+
+为了使配置更简单，可以使用快捷方式：`charset`和`viewport`。你还可以在类型中提供下面列出的任何键。
+
+### `useHead`
+
+`useHead`组合函数允许你以编程和响应式的方式管理头部标签，它由`Unhead`提供支持。
+
+和所有组合函数一样，它只能在组件的`setup`和生命周期钩子中使用。
+
+```vue
+<script setup lang="ts">
+useHead({
+  title: '我的应用',
+  meta: [
+    { name: 'description', content: '我的神奇网站。' }
+  ],
+  bodyAttrs: {
+    class: 'test'
+  },
+  script: [ { innerHTML: 'console.log(\'Hello world\')' } ]
+})
+</script>
+```
+我们建议查看`useHead`和`useHeadSafe`组合函数。
+
+### `useSeoMeta`
+
+`useSeoMeta`组合函数允许你将站点的SEO元标签定义为一个扁平的对象，并提供完整的TypeScript支持。
+
+这有助于避免拼写错误和常见错误，比如使用`name`而不是`property`。
+
+```vue
+<script setup lang="ts">
+useSeoMeta({
+  title: '我的神奇网站',
+  ogTitle: '我的神奇网站',
+  description: '这是我的神奇网站，让我来告诉你关于它的一切。',
+  ogDescription: '这是我的神奇网站，让我来告诉你关于它的一切。',
+  ogImage: 'https://example.com/image.png',
+  twitterCard: 'summary_large_image',
+})
+</script>
+```
+
+### 组件
+
+Nuxt提供了`<Title>`、`<Base>`、`<NoScript>`、`<Style>`、`<Meta>`、`<Link>`、`<Body>`、`<Html>`和`<Head>`组件，让你可以直接在组件的模板中与元数据进行交互。
+
+由于这些组件名称与原生HTML元素相匹配，在模板中将它们大写非常重要。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 过渡效果
 
 ## 数据获取

@@ -1130,18 +1130,218 @@ Nuxt提供了`<Title>`、`<Base>`、`<NoScript>`、`<Style>`、`<Meta>`、`<Link
 
 由于这些组件名称与原生HTML元素相匹配，在模板中将它们大写非常重要。
 
+`<Head>`和`<Body>`可以接受嵌套的元标签（出于美观的原因），但这对最终HTML中嵌套的元标签的渲染位置没有影响。
 
+```vue
+<script setup lang="ts">
+  const title = ref('你好，世界')
+</script>
 
+<template>
+  <div>
+    <Head>
+      <Title>{{title}}</Title>
+      <Meta name="description" :content="title" />
+      <Style type="text/css" children="body {background: green;}" />
+    </Head>
+    <h1>{{title}}</h1>
+  </div>
+</template>
+```
 
+### 类型
 
+下面是用于`useHead`、`app.head`和组件的非响应式类型。
 
+```ts
+interface MetaObject {
+  title?: string
+  titleTemplate?: string | ((title?: string) => string)
+  templateParams?: Record<string, string | Record<string, string>>
+  base?: Base
+  link?: Link[]
+  meta?: Meta[]
+  style?: Style[]
+  script?: Script[]
+  noscript?: Noscript[];
+  htmlAttrs?: HtmlAttributes;
+  bodyAttrs?: BodyAttributes;
+}
+```
 
+更详细的类型信息请参考 @unhead/schema。
 
+### 功能
 
+#### 响应式
 
+所有属性都支持响应式，包括计算属性、getter和响应式。
 
+建议使用`getter(() => value)`而不是计算属性`computed(() => value)`。
 
+::: code-tabs
+@tab useHead
+```vue
+<script setup lang="ts">
+const description = ref('我的神奇网站。')
 
+useHead({
+  meta: [
+    { name: 'description', content: description }
+  ],
+})
+</script>
+```
+
+@tab useSeoMeta
+```vue
+<script setup lang="ts">
+const description = ref('我的神奇网站。')
+
+useSeoMeta({
+  description
+})
+</script>
+```
+
+@tab Components
+```vue
+<script setup lang="ts">
+const description = ref('我的神奇网站。')
+</script>
+
+<template>
+  <div>
+    <Meta name="description" :content="description" />
+  </div>
+</template>
+```
+:::
+
+#### 标题模板
+
+你可以使用`titleTemplate`选项来提供一个动态模板，以自定义站点的标题，例如在每个页面的标题中添加站点名称。
+
+`titleTemplate`可以是一个字符串，其中`%s`会被标题替换，也可以是一个函数。
+
+如果你想使用一个函数（以获得更多的控制），那么它不能在`nuxt.config`中设置，而是建议在`app.vue`文件中设置，这样它将适用于你站点上的所有页面：
+
+```vue
+<script setup lang="ts">
+useHead({
+  titleTemplate: (titleChunk) => {
+    return titleChunk ? `${titleChunk} - 网站名称` : '网站名称';
+  }
+})
+</script>
+```
+
+现在，如果你在你站点的另一个页面上使用`useHead`将标题设置为`我的页面`，在浏览器标签中，标题将显示为`我的页面 - 网站名称`。你还可以传递`null`来使用默认的站点标题。
+
+#### Body标签
+
+你可以在适用的标签上使用`tagPosition: 'bodyClose'`选项将它们附件到`<body>`标签的末尾。
+
+例如：
+
+```vue
+<script setup lang="ts">
+useHead({
+  script: [
+    {
+      src: 'https://third-party-script.com',
+      // 有效选项为：'head' | 'bodyClose' | 'bodyOpen'
+      tagPosition: 'bodyClose'
+    }
+  ]
+})
+</script>
+```
+
+### 示例
+
+#### 使用`definePageMeta`
+
+在你的`pages/`目录下，你可以使用`definePageMeta`和`useHead`来根据当前路由设置元数据。
+
+例如，你可以先设置当前页面的标题（这是在构建时通过宏提取的，因此不能动态设置）：
+
+```vue
+<script setup lang="ts">
+definePageMeta({
+  title: '某个页面'
+})
+</script>
+```
+
+然后在你的布局文件中，你可以使用之前设置的路由元数据：
+
+```vue
+<script setup lang="ts">
+const route = useRoute()
+
+useHead({
+  meta: [{ property: 'og:title', content: `应用名称 - ${route.meta.title}` }]
+})
+</script>
+```
+
+#### 动态标题
+
+在下面的示例中，`titleTemplate`可以被设置为带有`%s`占位符的字符串，也可以被设置为一个函数，这样可以更灵活地为你的Nuxt应用的每个路由动态设置页面标题：
+
+```vue
+<script setup lang="ts">
+useHead({
+  // 作为字符串，
+  // 其中`%s`会被标题替换
+  titleTemplate: '%s - 网站标题',
+  // ... 或者作为一个函数
+  titleTemplate: (productCategory) => {
+    return productCategory
+      ? `${productCategory} - 网站标题`
+      : '网站标题'
+  }
+})
+</script>
+```
+
+`nuxt.config`也可以用作设置页面标题的替代方法。然而，`nuxt.config`不允许页面标题是动态的。因此，建议在`app.vue`文件中使用`titleTemplate`来添加动态标题，然后应用于你的Nuxt应用的所有路由。
+
+#### 外部CSS
+
+下面的示例展示了如何使用`useHead`组合式函数的`link`属性或使用`<Link>`组件来启用Google Fonts：
+
+::: code-tabs
+@tab useHead
+```vue
+<script setup lang="ts">
+useHead({
+  link: [
+    {
+      rel: 'preconnect',
+      href: 'https://fonts.googleapis.com'
+    },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
+      crossorigin: ''
+    }
+  ]
+})
+</script>
+```
+
+@tab Components
+```vue
+<template>
+  <div>
+    <Link rel="preconnect" href="https://fonts.googleapis.com" />
+    <Link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" crossorigin="" />
+  </div>
+</template>
+```
+:::
 
 ## 过渡效果
 

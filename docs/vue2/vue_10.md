@@ -1774,6 +1774,109 @@ export default defineNuxtRouteMiddleware(to => {
 + 如果在页面设置函数中执行数据获取操作，您可能需要重新考虑暂时不使用此功能。（按设计，视图过渡在进行时完全冻结DOM更新。）我们正在考虑将视图过渡限制在`<Suspense>`解析之前的最后时刻，但在此期间，如果您符合上述情况，您可能需要仔细考虑是否采用此功能。
 
 ## 数据获取
+Nuxt提供了组合函数来处理应用程序中的数据获取。
+
+Nuxt提供了两个组合函数和一个内置库，用于在浏览器或服务器环境中执行数据获取：`useFetch`、`useAsuncData`和`$fetch`。
+
+简而言之：
++ `useFetch`是在组件设置函数中处理数据获取的最简单方法。
++ `$fetch`可以根据用户交互进行网络请求。
++ `useAsyncData`结合`$fetch`，提供了更精细的控制。
+
+`useFetch`和`useAsyncData`共享一组常见的选项和模式，在后面的章节中我们将详细介绍。
+
+在此之前，首先要知道为什么需要这些组合函数。
+
+### 为什么需要特定的组合函数？
+
+使用像Nuxt这样的框架可以在客户端和服务器环境中执行调用调用和呈现页面时，必须解决一些问题。这就是为什么Nuxt提供了组合函数来封装查询，而不是让开发者仅依赖于`$fetch`调用。
+
+#### 网络请求重复
+
+`useFetch`和`useAsyncData`组合函数确保一旦在服务器上进行了API调用，数据将以有效的方式在负载中传递到客户端。
+
+负载时通过`useNuxtApp().payload`访问的JavaScript对象。它在客户端上用于避免在浏览器中执行代码时重新获取相同的数据。
+
+#### Suspense
+
+Nuxt在底层使用Vue的`<Suspense>`组件，以防止在视图中的每个异步数据可用之前导航。数据获取组合函数可以帮助您利用此功能，并根据每个调用的需求使用最适合的方法。
+
+### UseFetch
+
+`useFetch`组合函数是执行数据获取的最简单的方法。
+
+```vue
+<script setup lang="ts">
+  const {data: count} = await useFetch('/api/count');
+</script>
+<template>
+  页面访问量：{{ count }}
+</template>
+```
+
+这个组合函数是`useAsyncData`组合函数和`$fetch`工具的封装。
+
+### $fetch
+
+Nuxt包括了`ofetch`库，并且作为全局别名`$fetch`自动导入到应用程序中。它是`useFetch`在幕后使用的工具。
+
+```ts
+const users = await $fetch('/api/users').catch(e => e.data)
+```
+
+::: info 请注意，仅使用$fetch将不会提供网络请求重复和导航阻止。建议在提交数据到事件处理程序时使用 $fetch ,在客户端逻辑中使用，或与useAsyncData结合使用。
+:::
+
+`ofetch`库是基于Fetch API构建的，并为其添加了便利功能：
++ 在浏览器、Node或worker环境中的使用方式相同
++ 自动解析响应
++ 错误处理
++ 自动重试
++ 拦截器
+
+### `useAsyncData`
+
+`useAsyncData`组合函数负责封装异步逻辑并在解析完成后返回结果。
+
+事实上，`useFetch(url)`几乎相当于`useAsyncData(url, () => $fetch(url))`，它是为最常见的用例提供的开发者体验糖。
+
+在某些情况下，使用`useFetch`组合函数是不合适的，例如当CMS或第三方提供自己的查询层时。在这种情况下，您可以使用`useAsyncData`来封装您的调用，并仍然保持组合函数提供的好处。
+
+`useAsyncData`的第一个参数是用于缓存第二个参数（查询函数）的响应的唯一键。如果直接传递查询函数，则可以忽略该参数。在这种情况下，它将自动生成。
+
+```ts
+const { data, error } = await useAsyncData('users', () => myGetFunction('users'))
+```
+
+由于自动生成的键仅考虑调用`useAsyncData`的文件和行，因此建议始终创建自己的键以避免不需要的行为，如果您正在创建自己的自定义组合函数并封装`useAsyncData`。
+
+```ts
+const id = ref(1)
+const {data, error} = await useAsyncData(`user: ${id.value}`, () => {
+  return myGetFUnction('users', {id: id.value})
+}) 
+```
+
+`useAsyncData`组合函数是包装和等待多个`useFetch`完成，并获取每个结果的绝佳方式。
+
+```ts
+const { data: discounts, pending } = await useAsyncData('cart-discount', async () => {
+  const [coupons, offers] = await Promise.all([$fetch('/cart/coupons'), $fetch('/cart/offers')])
+
+  return {
+    coupons,
+    offers
+  }
+})
+```
+
+### 选项
+
+`useAsyncData`和`useFetch`返回相同的对象类型，并接受一组常见选项作为最后一个参数。它们可以帮助您控制组合函数的行为，例如导航阻止、缓存或执行。
+
+#### 懒加载
+
+
 
 ## 状态管理
 Nuxt提供了强大的状态管理库和useState组合函数，用于创建响应式且适用于SSR的共享状态。

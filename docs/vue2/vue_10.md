@@ -1869,12 +1869,226 @@ const { data: discounts, pending } = await useAsyncData('cart-discount', async (
   }
 })
 ```
-
+  
 ### 选项
 
 `useAsyncData`和`useFetch`返回相同的对象类型，并接受一组常见选项作为最后一个参数。它们可以帮助您控制组合函数的行为，例如导航阻止、缓存或执行。
 
 #### 懒加载
+
+默认情况下，数据获取的组合函数会在异步函数解析完成之前使用Vue的`Suspense`进行页面导航。通过使用`lazy`选项，可以忽略此功能在客户端导航时的使用。在这种情况下，你需要手动处理加载状态，使用`pending`值。
+
+```vue
+<script setup lang="ts">
+const { pending, data: posts } = useFetch('/api/posts', {
+  lazy: true
+})
+</script>
+
+<template>
+  <!-- 你需要处理加载状态 -->
+  <div v-if="pending">
+    加载中...
+  </div>
+  <div v-else>
+    <div v-for="post in posts">
+      <!-- 做一些操作 -->
+    </div>
+  </div>
+</template>
+```
+
+你还可以使用`useLazyFetch`和`useLazyAsyncData`作为方便的方法来执行相同的操作。
+
+```ts
+const {pending, data: posts} = useLazyFetch('/api/posts')
+```
+
+#### 仅在客户端获取数据
+
+默认情况下，数据获取的组合函数会在客户端和服务器环境中执行其异步函数。将`server`选项设置为`false`，只在客户端执行调用。在初始化加载时，在水合过程完成之前不会获取数据，因此你需要处理一个加载状态，但在随后的客户端导航中，数据将在加载页面之前等待获取。
+
+与`lazy`选项结合使用，这对于首次渲染不需要的数据（例如，非SEO敏感数据）非常有用。
+
+```ts
+/* 此调用在水合之前执行 */
+const { article } = await useFetch('api/article')
+
+/* 此调用仅在客户端执行 */
+const { pending, data: posts } = useFetch('/api/comments', {
+  lazy: true,
+  server: false
+})
+```
+
+`useFetch`组合函数用于在设置方法中调用，或在生命周期钩子函数的函数顶层直接调用，否则你应该使用`$fetch`方法。
+
+#### 减小有效负载大小
+
+`pick`选项可帮助你通过仅选择你想要从组合函数返回的字段来减少存储在HTML文档中的有效负载大小。
+
+```vue
+<script setup lang="ts">
+/* 仅选择模板中使用的字段 */
+const { data: mountain } = await useFetch('/api/mountains/everest', { pick: ['title', 'description'] })
+</script>
+
+<template>
+  <h1>{{ mountain.title }}</h1>
+  <p>{{ mountain.description }}</p>
+</template>
+```
+
+如果需要更多的控制或映射多个对象，可以使用`transform`函数来修改查询结果。
+
+```ts
+const { data: mountains } = await useFetch('/api/mountains', { 
+  transform: (mountains) => {
+    return mountains.map(mountain => ({ title: mountain.title, description: mountain.description }))
+  }
+})
+```
+
+::: info pick和transform都不会阻止初始时获取不需要的数据，但它们将阻止不需要的数据被添加到到从服务器传输到客户端的有效负载中。
+:::
+
+#### 缓存和重新获取数据
+
+##### 键
+
+`useFetch`和`useAsyncData`使用键来防止重新获取想吐的数据。
+
++ `useFetch`使用提供的URL作为键。或者，可以在作为最后一个参数传递的`options`对象中提供`key`值。
++ `useAsyncData`如果第一个参数是字符串，则将其用作键。如果第一个参数是执行查询的处理函数，则会为`useAsyncData`的实例生成一个基于文件名和行号的唯一键。
+
+::: info 要根据键获取缓存的数据，可以使用useNuxtData
+:::
+
+##### 刷新和执行
+
+如果要手动获取或刷新数据，请使用组合函数提供的`execute`或`refresh`函数。
+
+```vue
+<script setup lang="ts">
+const { data, error, execute, refresh } = await useFetch('/api/users')
+</script>
+
+<template>
+  <div>
+    <p>{{ data }}</p>
+    <button @click="refresh">刷新数据</button>
+  </div>
+</template>
+```
+
+`execute`函数是`refresh`的别名，使用方式完全形同，但在非立即的情况下更语义化。
+
+##### 监听
+
+如果希望在应用程序中的其他响应式值更改时重新运行获取函数，请使用`watch`选项。可以将其用于一个或多个可监听的元素。
+
+```ts
+const id = ref(1)
+
+const { data, error, refresh } = await useFetch('/api/users', {
+  /* 更改id将触发重新获取 */
+  watch: [id]
+})
+```
+
+请注意，监听响应式值不会更改获取的URL。例如，这将保持获取用户的相同初始ID，因为URL是在调用函数是构建的。
+
+```ts
+const id = ref(1)
+
+const { data, error, refresh } = await useFetch(`/api/users/${id.value}`, {
+  watch: [id]
+})
+```
+
+如果需要基于响应式值更改URL，可以使用计算URL。
+
+##### 计算URL
+
+有时，您可能需要从响应式值计算URL，并在每次更改时刷新数据，不需要费力的解决此问题，您可以将每个参数作为响应式值附加。Nuxt将自动使用响应式值并在每次更改时重新获取。
+
+```ts
+const id = ref(null)
+
+const { data, pending } = useLazyFetch('/api/user', {
+  query: {
+    user_id: id
+  }
+})
+```
+
+在URL构建更复杂的情况下，可以使用回调函数作为计算getter，返回URL字符串。
+
+每当依赖关系更改时，将使用新构建的URL获取数据。将其与非立即结合使用，可以在响应元素更改之前等待获取。
+
+```vue
+<script setup lang="ts">
+const id = ref(null)
+
+const { data, pending, status } = useLazyFetch(() => `/api/users/${id.value}`, {
+  immediate: false
+})
+</script>
+
+<template>
+  <div>
+    <!-- 在获取期间禁用输入 -->
+    <input v-model="id" type="number" :disabled="pending"/>
+
+    <div v-if="status === 'idle'">
+      输入用户ID
+    </div>
+    
+    <div v-else-if="pending">
+      加载中...
+    </div>
+
+    <div v-else>
+      {{ data }}
+    </div>
+  </div>
+</template>
+```
+
+如果需要在其他响应式值更改时强制刷新，还可以监听其他值。
+
+#### 不立即执行
+
+`useFetch`组合函数在调用时会立即开始获取数据。你可以通过设置`immediate: fakse`来阻止立即执行，例如，等待用户交互。
+
+为此，你需要使用`status`来处理获取生命周期，并使用`execute`来开始数据获取。
+
+```vue
+<script setup lang="ts">
+const { data, error, execute, pending, status } = await useLazyFetch('/api/comments')
+</script>
+
+<template>
+  <div v-if="status === 'idle'">
+    <button @click="execute">获取数据</button>
+  </div>
+
+  <div v-else-if="pending">
+    加载评论中...
+  </div>
+
+  <div v-else>
+    {{ data }}
+  </div>
+</template>
+```
+
+为了更精细的控制，`status`变量可以有以下取值：
++ `idle`: 获取未开始
++ `oending`: 获取已开始但尚未完成
++ `error`: 获取失败
++ `success`: 获取成功完成
+
 
 
 

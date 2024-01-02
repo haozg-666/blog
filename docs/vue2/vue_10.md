@@ -2085,12 +2085,171 @@ const { data, error, execute, pending, status } = await useLazyFetch('/api/comme
 
 为了更精细的控制，`status`变量可以有以下取值：
 + `idle`: 获取未开始
-+ `oending`: 获取已开始但尚未完成
++ `pending`: 获取已开始但尚未完成
 + `error`: 获取失败
 + `success`: 获取成功完成
 
 
+### 传递请求头和Cookie
 
+当我们在浏览器中调用`$fetch`时，用户的请求头（如`cookie`）会直接发送到API。但在服务器端渲染期间，由于`$fetch`请求在服务器内部进行，它不包含用户浏览器的Cookie，也不会传递来自获取响应的Cookie。
+
+#### 将客户端请求头传递到API
+
+我们可以使用`useRequestHeaders`来访问和代理服务器端的Cookie到API。
+
+下面的示例将请求头添加到同构的`$fetch`调用中，以确保API端点能够访问用户最初发送的相同`cookie`请求头。
+
+```ts
+const headers = useRequestHeaders(['cookie'])
+const {data} = await useFetch('/api/me', {headers})
+```
+
+::: info 在代理请求头到外部API之前，请谨慎选择需要包含的请求头。并非所有的请求头都可以安全地绕过，可能会引入不希望的行为。以下是一些不应该代理的常见请求头的列表：
++ host、accept
++ content-length、content-md5、content-type
++ x-forwarded-host、x-forwarded-port、x-forwarded-proto
++ cf-connecting-ip、cf-ray
+:::
+
+#### 从服务器端API调用中传递Cookie到SSR响应
+
+如果你想要将Cookie传递/代理到另一个方向，从内部请求返回到客户端，你需要自行处理。
+
+```ts
+import { appendResponseHeader, H3Event } from 'h3'
+
+export const fetchWithCookie = async (event: H3Event, url: string) => {
+  /* 从服务器端点获取响应 */
+  const res = await $fetch.raw(url)
+  /* 从响应中获取 Cookie */
+  const cookies = (res.headers.get('set-cookie') || '').split(',')
+  /* 将每个 Cookie 添加到我们的传入请求中 */
+  for (const cookie of cookies) {
+    appendResponseHeader(event, 'set-cookie', cookie)
+  }
+  /* 返回响应的数据 */
+  return res._data
+}
+```
+
+```ts
+// 这个组合函数将自动将 Cookie 传递给客户端
+const event = useRequestEvent()
+
+const result = await fetchWithCookie(event, '/api/with-cookie')
+
+onMounted(() => console.log(document.cookie))
+```
+
+### 选项API支持
+
+Nuxt3提供了一种在选项API中执行的`asyncData`获取数据的方式。你必须将组件定义包装在`defineNuxtComponent`中才能使用此功能。
+
+```vue
+<script>
+export default defineNuxtComponent({
+  /* 使用 fetchKey 选项提供一个唯一的键 */
+  fetchKey: 'hello',
+  async asyncData () {
+    return {
+      hello: await $fetch('/api/hello')
+    }
+  }
+})
+</script>
+```
+
+### 序列化
+
+当从`server`目录获取数据时，响应会使用`JSON.stringify`进行序列号。然而，由于序列化仅限于JavaScript原始类型，Nuxt会尽其所能将`$fetch`和`useFetch`的返回类型转换为匹配实际值的类型。
+
+#### 示例
+
+```ts
+export default defineEventHandler(() => {
+  return new Date()
+})
+```
+
+```vue
+<script setup lang="ts">
+// 尽管我们返回了一个 Date 对象，但 `data` 的类型被推断为字符串
+const { data } = await useFetch('/api/foo')
+</script>
+```
+
+#### 自定义序列化函数
+
+要自定义序列化行为，你可以在返回的对象上定义一个`toJSON`方法。如果定义了`toJSON`方法，Nuxt将尊重函数的返回类型，而不会尝试转换类型。
+
+```ts
+export default defineEventHandler(() => {
+  const data = {
+    createdAt: new Date(),
+
+    toJSON() {
+      return {
+        createdAt: {
+          year: this.createdAt.getFullYear(),
+          month: this.createdAt.getMonth(),
+          day: this.createdAt.getDate(),
+        },
+      }
+    },
+  }
+  return data
+})
+```
+
+```vue
+<script setup lang="ts">
+// `data` 的类型被推断为
+// {
+//   createdAt: {
+//     year: number
+//     month: number
+//     day: number
+//   }
+// }
+const { data } = await useFetch('/api/bar')
+</script>
+```
+
+#### 使用替换序列化器
+
+Nuxt当前不支持将`JSON.stringify`替换为其他序列化器。但是，你可以将负载返回为普通字符串，并利用`toJSON`方法来保持类型安全。在下面的示例中，我们使用`superjson`作为序列化器。
+
+```ts
+import superjson from 'superjson'
+
+export default defineEventHandler(() => {
+  const data = {
+    createdAt: new Date(),
+
+    // 绕过类型转换
+    toJSON() {
+      return this
+    }
+  }
+
+  // 使用 superjson 将输出序列化为字符串
+  return superjson.stringify(data) as unknown as typeof data
+})
+```
+
+```vue
+<script setup lang="ts">
+  import superjson from 'superjson'
+
+  // `date` 被推断为 { createdAt: Date }，你可以安全地使用 Date 对象的方法
+  const { data } = await useFetch('/api/superjson', {
+    transform: (value) => {
+      return superjson.parse(value as unknown as string)
+    },
+  })
+</script>
+```
 
 ## 状态管理
 Nuxt提供了强大的状态管理库和useState组合函数，用于创建响应式且适用于SSR的共享状态。

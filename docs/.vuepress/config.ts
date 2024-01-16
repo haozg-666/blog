@@ -81,6 +81,10 @@ export default defineUserConfig({
         ]
       },
       {
+        text: '教资',
+        link: '/teacher/teacher_01.md'
+      },
+      {
         text: '时间轴',
         link: '/timeline',
       },
@@ -101,6 +105,20 @@ export default defineUserConfig({
             '/js/debounceAndThrottle.md',
             '/js/interceptorsAxios.md'
           ],
+        }
+      ],
+      '/teacher/': [
+        {
+          text: '综合素质',
+          link: '/teacher/teacher_01.md',
+        },
+        {
+          text: '教育知识与能力',
+          link: '/teacher/teacher_02.md',
+        },
+        {
+          text: '中学数学',
+          link: '/teacher/teacher_03.md',
         }
       ],
       '/vue2/': [

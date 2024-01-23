@@ -2,6 +2,7 @@
 lang: zh-CN
 title: 【科二】教育知识与能力
 description: 【科二】教育知识与能力
+copy: false
 ---
 
 # 考试基本信息

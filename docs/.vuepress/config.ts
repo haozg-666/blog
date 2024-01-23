@@ -18,7 +18,7 @@ const __dirname = getDirname(import.meta.url)
 export default defineUserConfig({
   base: '/blog/',
   lang: 'zh-CN',
-  title: 'Mr.Haozg',
+  title: "Mr.Haozg's Notes",
   description: 'haozg',
   head: [['link', { rel: 'icon', href: '/blog/images/logo.png' }]],
   port: 8888,
@@ -185,7 +185,7 @@ export default defineUserConfig({
       }
     }),
     copyrightPlugin({
-      global: true,
+      global: false,
       author: '【haozg】',
       locales: {
         '/': {

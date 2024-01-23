@@ -2,6 +2,7 @@
 lang: zh-CN
 title: 【科三】中学数学
 description: 【科三】中学数学
+copy: false
 ---
 
 # 考试基本信息

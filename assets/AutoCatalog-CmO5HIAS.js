@@ -1,0 +1,1 @@
+import{_ as a,o as t,c as e,a as o,S as s,b as c}from"./app-pp3-cujv.js";const _={class:"auto-catalog"},l=c("h2",null,"目录",-1),r={__name:"AutoCatalog",setup(n){return(u,i)=>(t(),e("div",_,[l,o(s,{class:"auto-catalog-inner"})]))}},p=a(r,[["__file","AutoCatalog.vue"]]);export{p as default};
